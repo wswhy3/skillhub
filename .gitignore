@@ -32,6 +32,9 @@ yarn-error.log*
 .memory/
 *.local.json
 
+# Local toolchain (project-scoped JDK/Node/pnpm, not committed)
+.tools/
+
 # Java / Spring Boot
 .gradle/
 build/
