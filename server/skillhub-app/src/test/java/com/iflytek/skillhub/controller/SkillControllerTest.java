@@ -160,6 +160,7 @@ class SkillControllerTest {
                         "Pending preview",
                         "PUBLIC",
                         "ACTIVE",
+                        false,
                         10L,
                         2,
                         0,

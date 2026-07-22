@@ -288,7 +288,8 @@ public class PostgresSearchRebuildService implements SearchRebuildService {
                 payload.searchText(),
                 null,
                 skill.getVisibility().name(),
-                skill.getStatus().name()
+                skill.getStatus().name(),
+                skill.isRequiresApiKey()
         ));
     }
 

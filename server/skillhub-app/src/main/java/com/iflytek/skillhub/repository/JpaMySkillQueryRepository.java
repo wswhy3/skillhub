@@ -69,6 +69,7 @@ public class JpaMySkillQueryRepository implements MySkillQueryRepository {
                 skill.getSummary(),
                 skill.getVisibility().name(),
                 skill.getStatus().name(),
+                skill.isRequiresApiKey(),
                 skill.getDownloadCount(),
                 skill.getStarCount(),
                 skill.getRatingAvg(),

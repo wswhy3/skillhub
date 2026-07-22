@@ -49,6 +49,7 @@ public class PostgresFullTextIndexService implements SearchIndexService {
             entity.setSemanticVector(buildSemanticVector(normalizedDocument));
             entity.setVisibility(normalizedDocument.visibility());
             entity.setStatus(normalizedDocument.status());
+            entity.setRequiresApiKey(normalizedDocument.requiresApiKey());
             repository.save(entity);
         } else {
             SkillSearchDocumentEntity entity = new SkillSearchDocumentEntity(
@@ -64,6 +65,7 @@ public class PostgresFullTextIndexService implements SearchIndexService {
                     normalizedDocument.visibility(),
                     normalizedDocument.status()
             );
+            entity.setRequiresApiKey(normalizedDocument.requiresApiKey());
             repository.save(entity);
         }
     }
@@ -106,7 +108,8 @@ public class PostgresFullTextIndexService implements SearchIndexService {
                 document.searchText(),
                 document.semanticVector(),
                 truncate(document.visibility(), VISIBILITY_MAX_LENGTH),
-                truncate(document.status(), STATUS_MAX_LENGTH)
+                truncate(document.status(), STATUS_MAX_LENGTH),
+                document.requiresApiKey()
         );
     }
 

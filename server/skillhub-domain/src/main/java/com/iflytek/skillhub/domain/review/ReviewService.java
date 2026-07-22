@@ -343,6 +343,7 @@ public class ReviewService {
     }
 
     private void applyPublishedMetadata(Skill skill, SkillVersion skillVersion) {
+        skill.setRequiresApiKey(skillVersion.isRequiresApiKey());
         String metadataJson = skillVersion.getParsedMetadataJson();
         if (metadataJson == null || metadataJson.isBlank()) {
             return;

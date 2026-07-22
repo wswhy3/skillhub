@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ArrowUpCircle, ChevronDown, ChevronUp, Clock, Folder, Globe, Lock, RefreshCw, ShieldCheck, Terminal, User, Users } from 'lucide-react'
+import { ArrowLeft, ArrowUpCircle, ChevronDown, ChevronUp, Clock, Folder, Globe, KeyRound, Lock, RefreshCw, ShieldCheck, Terminal, User, Users } from 'lucide-react'
 import { MarkdownRenderer } from '@/features/skill/markdown-renderer'
 import { resolvePackageRelativeLink } from '@/features/skill/package-relative-link'
 import { FileTree } from '@/features/skill/file-tree'
@@ -800,6 +800,12 @@ export function SkillDetailPage() {
                 {skill.visibility === 'PUBLIC' && t('publish.visibilityOptions.public')}
                 {skill.visibility === 'PRIVATE' && t('publish.visibilityOptions.private')}
                 {skill.visibility === 'NAMESPACE_ONLY' && t('publish.visibilityOptions.namespaceOnly')}
+              </span>
+            )}
+            {skill.requiresApiKey && (
+              <span className="badge-soft inline-flex items-center gap-1 bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                <KeyRound className="h-3 w-3" />
+                {t('skillDetail.requiresApiKeyBadge')}
               </span>
             )}
             {isReviewFlowPending && (

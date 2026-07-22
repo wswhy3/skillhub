@@ -98,6 +98,7 @@ class SkillPublishServiceTest {
                 reviewTaskRepository,
                 securityScanService,
                 compensationService,
+                new com.iflytek.skillhub.domain.skill.validation.ApiKeyRequirementDetector(),
                 eventPublisher,
                 CLOCK
         );

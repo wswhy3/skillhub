@@ -18,6 +18,7 @@ import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
 import com.iflytek.skillhub.domain.skill.*;
 import com.iflytek.skillhub.domain.skill.metadata.SkillMetadata;
 import com.iflytek.skillhub.domain.skill.metadata.SkillMetadataParser;
+import com.iflytek.skillhub.domain.skill.validation.ApiKeyRequirementDetector;
 import com.iflytek.skillhub.domain.skill.validation.PackageEntry;
 import com.iflytek.skillhub.domain.skill.validation.PrePublishValidator;
 import com.iflytek.skillhub.domain.skill.validation.SkillPackageValidator;
@@ -83,6 +84,7 @@ public class SkillPublishService {
     private final ReviewTaskRepository reviewTaskRepository;
     private final SecurityScanService securityScanService;
     private final SkillStorageDeletionCompensationService compensationService;
+    private final ApiKeyRequirementDetector apiKeyRequirementDetector;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
@@ -100,6 +102,7 @@ public class SkillPublishService {
             ReviewTaskRepository reviewTaskRepository,
             SecurityScanService securityScanService,
             SkillStorageDeletionCompensationService compensationService,
+            ApiKeyRequirementDetector apiKeyRequirementDetector,
             ApplicationEventPublisher eventPublisher,
             Clock clock) {
         this.namespaceRepository = namespaceRepository;
@@ -115,6 +118,7 @@ public class SkillPublishService {
         this.reviewTaskRepository = reviewTaskRepository;
         this.securityScanService = securityScanService;
         this.compensationService = compensationService;
+        this.apiKeyRequirementDetector = apiKeyRequirementDetector;
         this.eventPublisher = eventPublisher;
         this.clock = clock;
     }
@@ -444,6 +448,7 @@ public class SkillPublishService {
         // 8. Create SkillVersion
         SkillVersion version = new SkillVersion(skill.getId(), metadata.version(), publisherId);
         version.setRequestedVisibility(visibility);
+        version.setRequiresApiKey(apiKeyRequirementDetector.requiresApiKey(entries, metadata));
         boolean autoPublish = forceAutoPublish || isSuperAdmin;
         if (autoPublish) {
             version.setStatus(SkillVersionStatus.PUBLISHED);
@@ -549,6 +554,7 @@ public class SkillPublishService {
         // 12. Update skill metadata and move the published pointer for auto-publish flows
         skill.setDisplayName(metadata.name());
         skill.setSummary(metadata.description());
+        skill.setRequiresApiKey(version.isRequiresApiKey());
         if (autoPublish || visibility == SkillVisibility.PRIVATE) {
             // Update latestVersionId for autoPublish or PRIVATE skill (UPLOADED status)
             skill.setLatestVersionId(version.getId());

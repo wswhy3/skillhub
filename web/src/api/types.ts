@@ -162,6 +162,7 @@ export interface SkillSummary {
   summary?: string
   visibility?: string
   status?: string
+  requiresApiKey?: boolean
   downloadCount: number
   starCount: number
   ratingAvg?: number
@@ -220,6 +221,7 @@ export interface SkillDetail {
   summary?: string
   visibility: string
   status: string
+  requiresApiKey?: boolean
   downloadCount: number
   starCount: number
   ratingAvg?: number
@@ -332,6 +334,7 @@ export interface SearchParams {
   page?: number
   size?: number
   starredOnly?: boolean
+  requiresApiKey?: boolean
 }
 
 export interface PagedResponse<T> {

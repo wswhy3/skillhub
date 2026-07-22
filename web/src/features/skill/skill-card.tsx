@@ -5,7 +5,8 @@ import { Card } from '@/shared/ui/card'
 import { NamespaceBadge } from '@/shared/components/namespace-badge'
 import { getHeadlineVersion } from '@/shared/lib/skill-lifecycle'
 import { formatCompactCount } from '@/shared/lib/number-format'
-import { Bookmark } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Bookmark, KeyRound } from 'lucide-react'
 
 interface SkillCardProps {
   skill: SkillSummary
@@ -17,6 +18,7 @@ interface SkillCardProps {
  * Reusable card for displaying one skill in lists such as landing, namespace, search, and stars.
  */
 export function SkillCard({ skill, onClick, highlightStarred = true }: SkillCardProps) {
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
   const { data: starStatus } = useStar(skill.id, highlightStarred && isAuthenticated)
   const showStarredHighlight = highlightStarred && isAuthenticated && starStatus?.starred
@@ -63,6 +65,12 @@ export function SkillCard({ skill, onClick, highlightStarred = true }: SkillCard
           {headlineVersion && (
             <span className="px-2.5 py-1 rounded-full bg-secondary/60 font-mono">
               v{headlineVersion.version}
+            </span>
+          )}
+          {skill.requiresApiKey && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 font-medium">
+              <KeyRound className="w-3 h-3" />
+              {t('skillCard.requiresApiKey')}
             </span>
           )}
           <span className="flex items-center gap-1">

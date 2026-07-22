@@ -14,5 +14,6 @@ public record SkillSearchDocument(
         String searchText,
         String semanticVector,
         String visibility,
-        String status
+        String status,
+        boolean requiresApiKey
 ) {}

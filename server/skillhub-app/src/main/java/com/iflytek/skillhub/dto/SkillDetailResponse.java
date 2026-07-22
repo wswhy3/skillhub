@@ -12,6 +12,7 @@ public record SkillDetailResponse(
         String summary,
         String visibility,
         String status,
+        boolean requiresApiKey,
         Long downloadCount,
         Integer starCount,
         Integer subscriptionCount,

@@ -45,6 +45,7 @@ class ClawHubRegistryFacadeTest {
                                 "summary",
                                 "PUBLIC",
                                 "ACTIVE",
+                                false,
                                 12L,
                                 3,
                                 BigDecimal.valueOf(4.5),

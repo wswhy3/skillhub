@@ -186,6 +186,7 @@
     "noResults": "No results found",
     "noResultsFor": "No skills found matching \"{{q}}\"",
     "filterStarred": "Starred only",
+    "filterRequiresApiKey": "Requires API Key",
     "noStarredResults": "No starred skills found",
     "noStarredResultsFor": "No starred skills match \"{{q}}\"",
     "noStarredSkills": "You have not starred any skills yet",
@@ -352,7 +353,8 @@
       "PUBLISHED": "Published",
       "REJECTED": "Rejected",
       "ARCHIVED": "Archived",
-      "HIDDEN": "Hidden"
+      "HIDDEN": "Hidden",
+      "REQUIRES_API_KEY": "Requires API Key"
     },
     "publishNew": "Publish New Skill",
     "update": "Update",
@@ -365,6 +367,7 @@
     "statusHidden": "Hidden",
     "statusScanning": "Scanning",
     "statusScanFailed": "Scan Failed",
+    "requiresApiKeyBadge": "Requires API Key",
     "archiveConfirmTitle": "Archive skill",
     "archiveConfirmDescription": "After archiving, regular users will no longer be able to view or download \"{{skill}}\". Continue?",
     "unarchiveConfirmTitle": "Restore skill",
@@ -399,7 +402,8 @@
       "PUBLISHED": "There are no published skills right now.",
       "REJECTED": "There are no rejected skills right now.",
       "ARCHIVED": "There are no archived skills right now.",
-      "HIDDEN": "There are no hidden skills right now."
+      "HIDDEN": "There are no hidden skills right now.",
+      "REQUIRES_API_KEY": "There are no skills that require an API key right now."
     },
     "publishSkill": "Publish Skill"
   },
@@ -866,6 +870,7 @@
     "versionStatusYanked": "Yanked",
     "pendingPreviewBadge": "Pending Preview",
     "rejectedBadge": "Review Rejected",
+    "requiresApiKeyBadge": "Requires API Key",
     "pendingPreviewTitle": "You are previewing a pending version",
     "pendingPreviewDescription": "This version is only visible to you. Before review approval, you can inspect the README, files, and version information, but you cannot star, rate, report, or download it.",
     "pendingPreviewInteractionHint": "Stars, ratings, and reports are disabled while this version is pending review.",
@@ -1296,7 +1301,8 @@
     "starredAction": "Click to unstar",
     "unstarTitle": "Remove from starred",
     "unstarDescription": "Are you sure you want to remove \"{{name}}\" from your starred skills?",
-    "unstarConfirm": "Remove"
+    "unstarConfirm": "Remove",
+    "requiresApiKey": "API Key"
   },
   "copyButton": {
     "copied": "Copied",

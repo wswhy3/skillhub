@@ -268,7 +268,14 @@ public class SkillGovernanceService {
         SkillVersion saved = skillVersionRepository.save(version);
         skillRepository.findById(version.getSkillId()).ifPresent(skill -> {
             if (versionId.equals(skill.getLatestVersionId())) {
-                skill.setLatestVersionId(findLatestPublishedVersionId(skill.getId()));
+                Long recalculatedLatestVersionId = findLatestPublishedVersionId(skill.getId());
+                skill.setLatestVersionId(recalculatedLatestVersionId);
+                if (recalculatedLatestVersionId == null) {
+                    skill.setRequiresApiKey(false);
+                } else {
+                    skillVersionRepository.findById(recalculatedLatestVersionId)
+                            .ifPresent(latest -> skill.setRequiresApiKey(latest.isRequiresApiKey()));
+                }
                 skill.setUpdatedBy(actorUserId);
                 skillRepository.save(skill);
             }

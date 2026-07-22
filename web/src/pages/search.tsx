@@ -96,6 +96,7 @@ export function SearchPage() {
   const sort = searchParams.sort || 'newest'
   const page = searchParams.page ?? 0
   const starredOnly = searchParams.starredOnly ?? false
+  const requiresApiKeyOnly = searchParams.requiresApiKey ?? false
   const [queryInput, setQueryInput] = useState(formatNamespaceSearchInput(namespace, q))
   const previousPageRef = useRef(page)
 
@@ -125,6 +126,7 @@ export function SearchPage() {
     page,
     size: PAGE_SIZE,
     starredOnly,
+    requiresApiKey: requiresApiKeyOnly || undefined,
   })
   const { data: labels } = useVisibleLabels()
   const {
@@ -142,44 +144,44 @@ export function SearchPage() {
 
     if (!parsedInput.query && !parsedInput.namespace) {
       startTransition(() => {
-        navigate({ to: '/search', search: { q: '', namespace: '', label: selectedLabel, sort, page: 0, starredOnly }, replace: page === 0 })
+        navigate({ to: '/search', search: { q: '', namespace: '', label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined }, replace: page === 0 })
       })
       return
     }
 
     const timeoutId = window.setTimeout(() => {
       startTransition(() => {
-        navigate({ to: '/search', search: { q: parsedInput.query, namespace: parsedInput.namespace, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
+        navigate({ to: '/search', search: { q: parsedInput.query, namespace: parsedInput.namespace, label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined }, replace: true })
       })
     }, 250)
 
     return () => window.clearTimeout(timeoutId)
-  }, [navigate, namespace, page, q, queryInput, selectedLabel, sort, starredOnly])
+  }, [navigate, namespace, page, q, queryInput, selectedLabel, sort, starredOnly, requiresApiKeyOnly])
 
   const handleSearch = (query: string) => {
     const parsedInput = parseNamespaceSearchInput(query)
     setQueryInput(query)
     startTransition(() => {
-      navigate({ to: '/search', search: { q: parsedInput.query, namespace: parsedInput.namespace, label: selectedLabel, sort, page: 0, starredOnly }, replace: true })
+      navigate({ to: '/search', search: { q: parsedInput.query, namespace: parsedInput.namespace, label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined }, replace: true })
     })
   }
 
   const handleSortChange = (newSort: string) => {
-    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort: newSort, page: 0, starredOnly } })
+    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort: newSort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
   const handlePageChange = (newPage: number) => {
     blurActiveElement()
-    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort, page: newPage, starredOnly } })
+    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort, page: newPage, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
   const handleLabelToggle = (label: string) => {
     const nextLabel = selectedLabel === label ? '' : label
-    navigate({ to: '/search', search: { q, namespace, label: nextLabel, sort, page: 0, starredOnly } })
+    navigate({ to: '/search', search: { q, namespace, label: nextLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
   const handleNamespaceClear = () => {
-    navigate({ to: '/search', search: { q, namespace: '', label: selectedLabel, sort, page: 0, starredOnly } })
+    navigate({ to: '/search', search: { q, namespace: '', label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
   const handleStarredToggle = () => {
@@ -193,7 +195,11 @@ export function SearchPage() {
       return
     }
 
-    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort, page: 0, starredOnly: !starredOnly } })
+    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort, page: 0, starredOnly: !starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
+  }
+
+  const handleRequiresApiKeyToggle = () => {
+    navigate({ to: '/search', search: { q, namespace, label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly ? undefined : true } })
   }
 
   const handleSkillClick = (namespace: string, slug: string) => {
@@ -280,6 +286,13 @@ export function SearchPage() {
             onClick={handleStarredToggle}
           >
             {t('search.filterStarred')}
+          </Button>
+          <Button
+            variant={requiresApiKeyOnly ? 'default' : 'outline'}
+            size="sm"
+            onClick={handleRequiresApiKeyToggle}
+          >
+            {t('search.filterRequiresApiKey')}
           </Button>
           {!starredOnly && labels?.map((label) => (
             <Button

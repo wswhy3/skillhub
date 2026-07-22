@@ -104,6 +104,7 @@ class ClawHubCompatControllerTest {
                                 "test summary",
                                 "PUBLIC",
                                 "ACTIVE",
+                                false,
                                 10L,
                                 5,
                                 BigDecimal.valueOf(4.5),

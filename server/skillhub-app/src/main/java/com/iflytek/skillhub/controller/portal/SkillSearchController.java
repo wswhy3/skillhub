@@ -40,6 +40,7 @@ public class SkillSearchController extends BaseApiController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String namespace,
             @RequestParam(name = "label", required = false) java.util.List<String> labels,
+            @RequestParam(name = "requiresApiKey", required = false) Boolean requiresApiKey,
             @Parameter(schema = @Schema(defaultValue = DEFAULT_SORT))
             @RequestParam(required = false) String sort,
             @Parameter(schema = @Schema(type = "integer", defaultValue = "0", minimum = "0"))
@@ -56,6 +57,7 @@ public class SkillSearchController extends BaseApiController {
                 parseNonNegativeInt(page, DEFAULT_PAGE),
                 parsePositiveInt(size, DEFAULT_SIZE),
                 labels,
+                requiresApiKey,
                 userId,
                 userNsRoles
         );

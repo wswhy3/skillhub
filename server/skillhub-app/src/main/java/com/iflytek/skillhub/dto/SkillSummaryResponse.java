@@ -10,6 +10,7 @@ public record SkillSummaryResponse(
         String summary,
         String visibility,
         String status,
+        boolean requiresApiKey,
         Long downloadCount,
         Integer starCount,
         BigDecimal ratingAvg,

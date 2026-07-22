@@ -29,7 +29,8 @@ public class MySkillAppService {
         PUBLISHED,
         REJECTED,
         ARCHIVED,
-        HIDDEN
+        HIDDEN,
+        REQUIRES_API_KEY
     }
 
     private final SkillRepository skillRepository;
@@ -210,6 +211,9 @@ public class MySkillAppService {
         if (filter == MySkillFilter.HIDDEN) {
             return platformRoles.contains("SUPER_ADMIN") && skill.isHidden();
         }
+        if (filter == MySkillFilter.REQUIRES_API_KEY) {
+            return skill.isRequiresApiKey() && !skill.isHidden();
+        }
 
         if (skill.isHidden()) {
             return false;
@@ -229,7 +233,7 @@ public class MySkillAppService {
             case PENDING_REVIEW -> ownerPreviewVersion != null && "PENDING_REVIEW".equals(ownerPreviewVersion.status());
             case PUBLISHED -> publishedVersion != null;
             case REJECTED -> ownerPreviewVersion != null && "REJECTED".equals(ownerPreviewVersion.status());
-            case ALL, ARCHIVED, HIDDEN -> true;
+            case ALL, ARCHIVED, HIDDEN, REQUIRES_API_KEY -> true;
         };
     }
 

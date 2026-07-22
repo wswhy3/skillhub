@@ -44,6 +44,9 @@ public class SkillSearchDocumentEntity {
     @Column(nullable = false, length = 32)
     private String status;
 
+    @Column(name = "requires_api_key", nullable = false)
+    private boolean requiresApiKey = false;
+
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
@@ -73,6 +76,14 @@ public class SkillSearchDocumentEntity {
         this.semanticVector = semanticVector;
         this.visibility = visibility;
         this.status = status;
+    }
+
+    public boolean isRequiresApiKey() {
+        return requiresApiKey;
+    }
+
+    public void setRequiresApiKey(boolean requiresApiKey) {
+        this.requiresApiKey = requiresApiKey;
     }
 
     @PrePersist

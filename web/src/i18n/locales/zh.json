@@ -186,6 +186,7 @@
     "noResults": "未找到结果",
     "noResultsFor": "没有找到与 \"{{q}}\" 相关的技能",
     "filterStarred": "只看已收藏",
+    "filterRequiresApiKey": "需配置 API Key",
     "noStarredResults": "未找到已收藏技能",
     "noStarredResultsFor": "已收藏技能中没有与 \"{{q}}\" 相关的结果",
     "noStarredSkills": "你还没有收藏任何技能",
@@ -352,7 +353,8 @@
       "PUBLISHED": "已发布",
       "REJECTED": "已拒绝",
       "ARCHIVED": "已归档",
-      "HIDDEN": "已隐藏"
+      "HIDDEN": "已隐藏",
+      "REQUIRES_API_KEY": "需配置 API Key"
     },
     "publishNew": "发布新技能",
     "update": "更新",
@@ -365,6 +367,7 @@
     "statusHidden": "已隐藏",
     "statusScanning": "安全扫描中",
     "statusScanFailed": "扫描失败",
+    "requiresApiKeyBadge": "需配置 API Key",
     "archiveConfirmTitle": "确认归档技能",
     "archiveConfirmDescription": "归档后普通用户将无法看到或下载“{{skill}}”，确定继续吗？",
     "unarchiveConfirmTitle": "确认恢复技能",
@@ -399,7 +402,8 @@
       "PUBLISHED": "当前没有已发布的技能。",
       "REJECTED": "当前没有已拒绝的技能。",
       "ARCHIVED": "当前没有已归档的技能。",
-      "HIDDEN": "当前没有已隐藏的技能。"
+      "HIDDEN": "当前没有已隐藏的技能。",
+      "REQUIRES_API_KEY": "当前没有需要配置 API Key 的技能。"
     },
     "publishSkill": "发布技能"
   },
@@ -866,6 +870,7 @@
     "versionStatusYanked": "已撤回",
     "pendingPreviewBadge": "待审核预览",
     "rejectedBadge": "审核未通过",
+    "requiresApiKeyBadge": "需配置 API Key",
     "pendingPreviewTitle": "当前正在预览待审核版本",
     "pendingPreviewDescription": "该版本仅你本人可见。审核通过前，你可以查看 README、文件和版本信息，但不能收藏、评分、举报或下载。",
     "pendingPreviewInteractionHint": "待审核预览期间不可收藏、评分或举报。",
@@ -1297,7 +1302,8 @@
     "starredAction": "点击取消收藏",
     "unstarTitle": "取消收藏",
     "unstarDescription": "确定要取消收藏技能“{{name}}”吗？",
-    "unstarConfirm": "取消收藏"
+    "unstarConfirm": "取消收藏",
+    "requiresApiKey": "需 API Key"
   },
   "copyButton": {
     "copied": "已复制",

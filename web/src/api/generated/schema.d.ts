@@ -4081,6 +4081,7 @@ export interface components {
             summary?: string;
             visibility?: string;
             status?: string;
+            requiresApiKey?: boolean;
             /** Format: int64 */
             downloadCount?: number;
             /** Format: int32 */
@@ -4311,6 +4312,7 @@ export interface components {
             summary?: string;
             visibility?: string;
             status?: string;
+            requiresApiKey?: boolean;
             /** Format: int64 */
             downloadCount?: number;
             /** Format: int32 */
@@ -8508,6 +8510,7 @@ export interface operations {
                 q?: string;
                 namespace?: string;
                 label?: string[];
+                requiresApiKey?: boolean;
                 sort?: string;
                 page?: number;
                 size?: number;

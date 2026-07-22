@@ -389,6 +389,11 @@ export function MySkillsPage() {
                               {resolveStatusLabel(filter === 'HIDDEN' ? 'HIDDEN' : skill.status)}
                             </span>
                           ) : null}
+                          {skill.requiresApiKey ? (
+                            <span className="status-pill status-pill--review">
+                              {t('mySkills.requiresApiKeyBadge')}
+                            </span>
+                          ) : null}
                           {headlineVersion?.status ? (
                             <span className={resolveStatusClassName(headlineVersion.status)}>
                               {resolveStatusLabel(headlineVersion.status)}

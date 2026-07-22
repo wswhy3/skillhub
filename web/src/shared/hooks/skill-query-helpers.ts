@@ -19,6 +19,10 @@ export function buildSkillSearchUrl(params: SearchParams) {
     queryParams.append('label', params.label)
   }
 
+  if (params.requiresApiKey !== undefined) {
+    queryParams.append('requiresApiKey', String(params.requiresApiKey))
+  }
+
   if (params.sort) {
     queryParams.append('sort', params.sort)
   }

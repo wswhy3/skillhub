@@ -176,6 +176,7 @@ class ReviewPortalControllerTest {
                                 "Summary",
                                 "PUBLIC",
                                 "ACTIVE",
+                                false,
                                 8L,
                                 2,
                                 0,

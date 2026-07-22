@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, KeyRound } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { buildApiUrl, WEB_API_PREFIX } from '@/api/client'
 import type { ReviewSkillDetail } from '@/api/types'
@@ -94,6 +94,12 @@ export function ReviewSkillDetailSection({ detail, isLoading, hasError, reviewId
             <span className="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-medium font-mono text-foreground">
               {detail.activeVersion}
             </span>
+            {detail.skill.requiresApiKey && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                <KeyRound className="h-3 w-3" />
+                {t('skillDetail.requiresApiKeyBadge')}
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             {t('review.skillDetailDescription', {

@@ -37,7 +37,8 @@ class PostgresFullTextIndexServiceTest {
                 "search text",
                 null,
                 "PUBLIC",
-                "ACTIVE"
+                "ACTIVE",
+                false
         );
 
         service.index(document);

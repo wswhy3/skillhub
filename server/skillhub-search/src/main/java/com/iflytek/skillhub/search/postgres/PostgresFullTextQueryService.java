@@ -139,6 +139,11 @@ public class PostgresFullTextQueryService implements SearchQueryService {
             sql.append("AND d.namespace_id = :namespaceId ");
         }
 
+        // API key requirement filtering
+        if (query.requiresApiKey() != null) {
+            sql.append("AND d.requires_api_key = :requiresApiKey ");
+        }
+
         if (query.labelSlugs() != null && !query.labelSlugs().isEmpty()) {
             sql.append("AND d.skill_id IN (");
             sql.append("SELECT sl.skill_id FROM skill_label sl ");
@@ -200,6 +205,10 @@ public class PostgresFullTextQueryService implements SearchQueryService {
             nativeQuery.setParameter("namespaceId", query.namespaceId());
         }
 
+        if (query.requiresApiKey() != null) {
+            nativeQuery.setParameter("requiresApiKey", query.requiresApiKey());
+        }
+
         if (query.labelSlugs() != null && !query.labelSlugs().isEmpty()) {
             nativeQuery.setParameter("labelSlugs", query.labelSlugs());
         }
@@ -242,6 +251,10 @@ public class PostgresFullTextQueryService implements SearchQueryService {
 
         if (query.namespaceId() != null) {
             countQuery.setParameter("namespaceId", query.namespaceId());
+        }
+
+        if (query.requiresApiKey() != null) {
+            countQuery.setParameter("requiresApiKey", query.requiresApiKey());
         }
 
         if (query.labelSlugs() != null && !query.labelSlugs().isEmpty()) {

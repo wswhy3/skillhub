@@ -45,6 +45,9 @@ public class Skill {
     @Column(name = "download_count", nullable = false)
     private Long downloadCount = 0L;
 
+    @Column(name = "requires_api_key", nullable = false)
+    private boolean requiresApiKey = false;
+
     @Column(nullable = false)
     private boolean hidden = false;
 
@@ -145,6 +148,10 @@ public class Skill {
         return downloadCount;
     }
 
+    public boolean isRequiresApiKey() {
+        return requiresApiKey;
+    }
+
     public boolean isHidden() {
         return hidden;
     }
@@ -220,6 +227,10 @@ public class Skill {
 
     public void setUpdatedBy(String updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public void setRequiresApiKey(boolean requiresApiKey) {
+        this.requiresApiKey = requiresApiKey;
     }
 
     public void setHidden(boolean hidden) {

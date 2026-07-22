@@ -65,6 +65,7 @@ class MeControllerTest {
                                 "Assist with code review",
                                 "PUBLIC",
                                 "ACTIVE",
+                                false,
                                 12L,
                                 3,
                                 null,

@@ -236,10 +236,12 @@ public class PromotionService {
         newVersion.setTotalSize(sourceVersion.getTotalSize());
         newVersion.setBundleReady(sourceVersion.isBundleReady());
         newVersion.setDownloadReady(sourceVersion.isDownloadReady());
+        newVersion.setRequiresApiKey(sourceVersion.isRequiresApiKey());
         newVersion = skillVersionRepository.save(newVersion);
 
         // Update skill's latest version
         newSkill.setLatestVersionId(newVersion.getId());
+        newSkill.setRequiresApiKey(newVersion.isRequiresApiKey());
         skillRepository.save(newSkill);
 
         // Copy file records (reuse storageKey)

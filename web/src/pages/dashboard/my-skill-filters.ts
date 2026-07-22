@@ -1,10 +1,10 @@
-export type MySkillFilter = 'ALL' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED' | 'HIDDEN'
+export type MySkillFilter = 'ALL' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED' | 'HIDDEN' | 'REQUIRES_API_KEY'
 
 export function getMySkillFilters(isSuperAdmin: boolean): MySkillFilter[] {
   if (isSuperAdmin) {
-    return ['ALL', 'PUBLISHED', 'HIDDEN', 'ARCHIVED']
+    return ['ALL', 'PUBLISHED', 'HIDDEN', 'ARCHIVED', 'REQUIRES_API_KEY']
   }
-  return ['ALL', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'ARCHIVED']
+  return ['ALL', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'ARCHIVED', 'REQUIRES_API_KEY']
 }
 
 export function getMySkillEmptyStateKey(filter: MySkillFilter): { title: string; description: string } {

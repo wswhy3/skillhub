@@ -54,6 +54,9 @@ public class SkillVersion {
     @Column(name = "download_ready", nullable = false)
     private boolean downloadReady;
 
+    @Column(name = "requires_api_key", nullable = false)
+    private boolean requiresApiKey = false;
+
     @Column(name = "yanked_at")
     private Instant yankedAt;
 
@@ -137,6 +140,10 @@ public class SkillVersion {
         return downloadReady;
     }
 
+    public boolean isRequiresApiKey() {
+        return requiresApiKey;
+    }
+
     public Instant getYankedAt() {
         return yankedAt;
     }
@@ -196,6 +203,10 @@ public class SkillVersion {
 
     public void setDownloadReady(boolean downloadReady) {
         this.downloadReady = downloadReady;
+    }
+
+    public void setRequiresApiKey(boolean requiresApiKey) {
+        this.requiresApiKey = requiresApiKey;
     }
 
     public void setYankedAt(Instant yankedAt) {
