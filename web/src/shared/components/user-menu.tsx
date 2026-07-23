@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { authApi } from '@/api/client'
+import { authApi, getIamLogoutUrl } from '@/api/client'
 import { useMyNamespaces } from '@/shared/hooks/use-namespace-queries'
 import { buildGlobalReviewsPath, canAccessReviewCenter } from '@/features/review/review-paths'
 import { clearSessionScopedQueries } from '@/features/notification/notification-session'
@@ -81,7 +81,14 @@ export function UserMenu({ user, triggerClassName }: UserMenuProps) {
       // Always clear cache and redirect, even if API call fails
       clearSessionScopedQueries(queryClient)
       queryClient.setQueryData(['auth', 'me'], null)
-      window.location.href = '/'
+      const iamLogoutUrl = user.oauthProvider === 'iam' ? getIamLogoutUrl() : null
+      if (iamLogoutUrl) {
+        // End the upstream SSO session as well, then have IAM redirect back here
+        const redirectUrl = encodeURIComponent(window.location.origin + '/')
+        window.location.href = `${iamLogoutUrl}?redirectBack=true&redirectUrl=${redirectUrl}`
+      } else {
+        window.location.href = '/'
+      }
     }
   }
 

@@ -2,6 +2,8 @@ package com.iflytek.skillhub.auth.config;
 
 import com.iflytek.skillhub.auth.oauth.CustomOAuth2UserService;
 import com.iflytek.skillhub.auth.oauth.CustomOidcUserService;
+import com.iflytek.skillhub.auth.oauth.IamClaimsExtractor;
+import com.iflytek.skillhub.auth.oauth.IamTokenRequestEntityConverter;
 import com.iflytek.skillhub.auth.oauth.OAuth2LoginFailureHandler;
 import com.iflytek.skillhub.auth.oauth.OAuth2LoginSuccessHandler;
 import com.iflytek.skillhub.auth.oauth.SkillHubOAuth2AuthorizationRequestResolver;
@@ -19,6 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
@@ -120,6 +125,7 @@ public class SecurityConfig {
             })
             .oauth2Login(oauth2 -> oauth2
                 .authorizationEndpoint(endpoint -> endpoint.authorizationRequestResolver(authorizationRequestResolver))
+                .tokenEndpoint(token -> token.accessTokenResponseClient(iamAwareTokenResponseClient()))
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                     .oidcUserService(customOidcUserService))
@@ -174,6 +180,22 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    /**
+     * Token response client that routes the corporate IAM registration to a query-string style
+     * token request (IAM spec section 3.4) while all other providers keep the standard
+     * form-encoded POST behavior.
+     */
+    private OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> iamAwareTokenResponseClient() {
+        DefaultAuthorizationCodeTokenResponseClient iamClient =
+                new DefaultAuthorizationCodeTokenResponseClient();
+        iamClient.setRequestEntityConverter(new IamTokenRequestEntityConverter());
+        DefaultAuthorizationCodeTokenResponseClient defaultClient =
+                new DefaultAuthorizationCodeTokenResponseClient();
+        return grantRequest -> (IamClaimsExtractor.PROVIDER.equals(
+                grantRequest.getClientRegistration().getRegistrationId()) ? iamClient : defaultClient)
+                .getTokenResponse(grantRequest);
     }
 
     private void configureRoutePolicies(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {

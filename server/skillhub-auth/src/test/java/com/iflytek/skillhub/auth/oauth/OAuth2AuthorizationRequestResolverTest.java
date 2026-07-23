@@ -30,13 +30,24 @@ class OAuth2AuthorizationRequestResolverTest {
                 .scope("read:user")
                 .clientName("GitHub")
                 .build();
+        ClientRegistration iam = ClientRegistration.withRegistrationId("iam")
+                .clientId("iam-client")
+                .clientSecret("iam-secret")
+                .authorizationUri("https://iam.test/esc-sso/oauth2.0/authorize")
+                .tokenUri("https://iam.test/esc-sso/oauth2.0/accessToken")
+                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+                .userInfoUri("https://iam.test/esc-sso/oauth2.0/profile")
+                .userNameAttributeName("id")
+                .authorizationGrantType(org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE)
+                .clientName("IAM")
+                .build();
         OAuthLoginFlowService oauthLoginFlowService = new OAuthLoginFlowService(
                 java.util.List.of(),
                 mock(AccessPolicy.class),
                 mock(IdentityBindingService.class)
         );
         resolver = new SkillHubOAuth2AuthorizationRequestResolver(
-                new InMemoryClientRegistrationRepository(github),
+                new InMemoryClientRegistrationRepository(github, iam),
                 oauthLoginFlowService
         );
     }
@@ -64,5 +75,28 @@ class OAuth2AuthorizationRequestResolverTest {
         HttpSession session = request.getSession(false);
         assertThat(session).isNotNull();
         assertThat(session.getAttribute(OAuthLoginRedirectSupport.SESSION_RETURN_TO_ATTRIBUTE)).isNull();
+    }
+
+    @Test
+    void resolve_appendsOauthTimestampForIamRegistration() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth2/authorization/iam");
+
+        var authorizationRequest = resolver.resolve(request, "iam");
+
+        assertThat(authorizationRequest).isNotNull();
+        assertThat(authorizationRequest.getAuthorizationRequestUri()).contains("&oauth_timestamp=");
+        String timestamp = (String) authorizationRequest.getAdditionalParameters().get("oauth_timestamp");
+        assertThat(timestamp).isNotNull().hasSize(13);
+    }
+
+    @Test
+    void resolve_doesNotAppendOauthTimestampForOtherRegistrations() {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth2/authorization/github");
+
+        var authorizationRequest = resolver.resolve(request, "github");
+
+        assertThat(authorizationRequest).isNotNull();
+        assertThat(authorizationRequest.getAuthorizationRequestUri()).doesNotContain("oauth_timestamp");
+        assertThat(authorizationRequest.getAdditionalParameters()).doesNotContainKey("oauth_timestamp");
     }
 }
