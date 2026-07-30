@@ -3,11 +3,18 @@ import { getMySkillEmptyStateKey, getMySkillFilters } from './my-skill-filters'
 
 describe('getMySkillFilters', () => {
   it('returns lifecycle filters for regular users', () => {
-    expect(getMySkillFilters(false)).toEqual(['ALL', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'ARCHIVED'])
+    expect(getMySkillFilters(false)).toEqual([
+      'ALL',
+      'PENDING_REVIEW',
+      'PUBLISHED',
+      'REJECTED',
+      'ARCHIVED',
+      'REQUIRES_API_KEY',
+    ])
   })
 
   it('adds hidden filter for super admins', () => {
-    expect(getMySkillFilters(true)).toEqual(['ALL', 'PUBLISHED', 'HIDDEN', 'ARCHIVED'])
+    expect(getMySkillFilters(true)).toEqual(['ALL', 'PUBLISHED', 'HIDDEN', 'ARCHIVED', 'REQUIRES_API_KEY'])
   })
 
   it('returns default empty-state copy for all skills', () => {
