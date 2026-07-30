@@ -107,7 +107,56 @@ docker compose --env-file .env.release -f compose.release.yml up -d
 - Web UI: `SKILLHUB_PUBLIC_BASE_URL`
 - Backend API: `http://localhost:8080`
 
-### 5.2 关键文件
+### 5.2 连接外部 Redis Cluster
+
+发布 Compose 默认仍使用内置单机 Redis。连接外部 Redis Cluster 时，在
+`.env.release` 中设置标准 Spring Boot 配置，不需要额外的模式开关：
+
+```dotenv
+SPRING_DATA_REDIS_CLUSTER_NODES=redis-0.example.com:6379,redis-1.example.com:6379,redis-2.example.com:6379
+SPRING_DATA_REDIS_CLUSTER_MAX_REDIRECTS=5
+SPRING_DATA_REDIS_USERNAME=skillhub
+SPRING_DATA_REDIS_PASSWORD=replace-with-secret
+SPRING_DATA_REDIS_SSL_ENABLED=true
+SPRING_DATA_REDIS_CONNECT_TIMEOUT=5s
+SPRING_DATA_REDIS_TIMEOUT=3s
+```
+
+Cluster 节点返回给客户端的所有地址必须能从 `server` 容器访问。Redis Cluster
+只支持数据库 `0`；不要为 Cluster 设置非零的
+`SPRING_DATA_REDIS_DATABASE`。配置 Cluster 节点后，Spring Boot 自动忽略单机
+`host`/`port`，Compose 中的内置 Redis 容器仍会启动，但不会被 Server 使用。
+
+对真实 Cluster 运行功能检查：
+
+```bash
+REDIS_CLUSTER_TEST_NODES=redis-0.example.com:6379,redis-1.example.com:6379,redis-2.example.com:6379 \
+REDIS_CLUSTER_TEST_USERNAME=skillhub \
+REDIS_CLUSTER_TEST_PASSWORD=replace-with-secret \
+make test-redis-cluster
+```
+
+该检查覆盖 Spring Data 读写、Spring Session 保存/读取/删除和 Redisson Stream。
+
+### 5.3 连接外部 Redis Sentinel
+
+Sentinel 使用标准 Spring Boot 配置。数据节点和 Sentinel 可以使用不同 ACL：
+
+```dotenv
+SPRING_DATA_REDIS_SENTINEL_MASTER=mymaster
+SPRING_DATA_REDIS_SENTINEL_NODES=sentinel-0.example.com:26379,sentinel-1.example.com:26379,sentinel-2.example.com:26379
+SPRING_DATA_REDIS_USERNAME=skillhub
+SPRING_DATA_REDIS_PASSWORD=replace-with-data-node-secret
+SPRING_DATA_REDIS_SENTINEL_USERNAME=sentinel-user
+SPRING_DATA_REDIS_SENTINEL_PASSWORD=replace-with-sentinel-secret
+SKILLHUB_REDIS_SENTINEL_CHECK_SENTINELS_LIST=true
+```
+
+Sentinel 配置优先于 Cluster 和单机 `host`/`port`。在 Kubernetes 等 Sentinel
+返回地址与客户端入口不一致的环境中，可以将
+`SKILLHUB_REDIS_SENTINEL_CHECK_SENTINELS_LIST` 设为 `false`。
+
+### 5.4 关键文件
 
 - `compose.release.yml`
   - 使用发布镜像，不在用户机器上执行本地构建
@@ -121,7 +170,7 @@ docker compose --env-file .env.release -f compose.release.yml up -d
   - 在启动前校验 `.env.release`
   - 可提前拦截占位值、URL 格式错误、缺失的 OSS 凭据、危险的明文默认值
 
-### 5.3 镜像标签约定
+### 5.5 镜像标签约定
 
 - `edge`
   - `main` 分支最新构建
@@ -194,6 +243,9 @@ docker compose --env-file .env.release -f compose.release.yml up -d
 - 推荐将敏感变量放入 CI/CD Secret 或主机上的受控 `.env.release`
 - 外部对象存储通过 `SKILLHUB_STORAGE_S3_*` 注入
 - 前端反代和运行时 API 地址通过 `SKILLHUB_API_UPSTREAM` / `SKILLHUB_WEB_API_BASE_URL` 注入
+- `SKILLHUB_TRUST_FORWARDED_PROTO` 默认保持 `false`。只有 Web 容器仅能经由可信
+  TLS 终止代理访问，且该代理会覆盖客户端传入的 `X-Forwarded-Proto` 时才设为
+  `true`；否则客户端可伪造协议并影响 OAuth 回调、重定向和安全 Cookie 判断
 - 如果要开放真实登录，再补充 `OAUTH2_GITHUB_CLIENT_ID` / `OAUTH2_GITHUB_CLIENT_SECRET`
 - 如果要启用密码重置验证码邮件，参见：`docs/19-smtp-password-reset-email-setup.md`
 
