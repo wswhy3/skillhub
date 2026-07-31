@@ -70,11 +70,11 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: ${OAUTH2_GITLAB_DISPLAY_NAME:GitLab}
           iam:
-            client-id: ${OAUTH2_IAM_CLIENT_ID:placeholder}
-            client-secret: ${OAUTH2_IAM_CLIENT_SECRET:placeholder}
+            client-id: cc9238da752f6f45acda
+            client-secret: 79562fb2d4ed724cca68c107163dfef09834
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            client-name: ${OAUTH2_IAM_DISPLAY_NAME:企业IAM}
+            redirect-uri: https://skillhub-test.changhongit.com/login/oauth2/code/iam
+            client-name: skillhub
         provider:
           github:
             user-info-uri: https://api.github.com/user
