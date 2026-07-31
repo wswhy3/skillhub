@@ -66,6 +66,7 @@ type RuntimeConfig = {
   authSessionBootstrapEnabled?: string
   authSessionBootstrapProvider?: string
   authSessionBootstrapAuto?: string
+  iamLogoutUrl?: string
 }
 
 declare global {
@@ -79,6 +80,15 @@ function getRuntimeConfig(): RuntimeConfig {
     return {}
   }
   return window.__SKILLHUB_RUNTIME_CONFIG__ ?? {}
+}
+
+/**
+ * Corporate IAM single-logout endpoint injected at deploy time. When set, the browser is
+ * redirected here after the local session is destroyed so the upstream SSO session ends too.
+ */
+export function getIamLogoutUrl(): string | null {
+  const url = getRuntimeConfig().iamLogoutUrl?.trim()
+  return url ? url : null
 }
 
 function getApiBaseUrl(): string {

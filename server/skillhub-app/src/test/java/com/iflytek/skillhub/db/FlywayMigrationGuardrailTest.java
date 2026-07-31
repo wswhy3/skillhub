@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 
 class FlywayMigrationGuardrailTest {
 
+    // Fork-owned migrations start at V100 so future upstream migrations can keep their sequence.
+    private static final int FORK_MIGRATION_BASE_VERSION = 100;
     private static final Pattern VERSIONED_MIGRATION_PATTERN =
             Pattern.compile("^V(?<version>\\d+)__(?<description>.+)\\.sql$");
 
@@ -42,7 +44,7 @@ class FlywayMigrationGuardrailTest {
     }
 
     @Test
-    void versionedMigrations_mustRemainContiguous() throws IOException {
+    void versionedMigrations_mustRemainContiguousWithinReservedRanges() throws IOException {
         List<Integer> versions = migrationFiles().stream()
                 .map(path -> VERSIONED_MIGRATION_PATTERN.matcher(path.getFileName().toString()))
                 .filter(Matcher::matches)
@@ -50,13 +52,16 @@ class FlywayMigrationGuardrailTest {
                 .sorted()
                 .toList();
 
+        List<Integer> upstreamVersions = versions.stream()
+                .filter(version -> version < FORK_MIGRATION_BASE_VERSION)
+                .toList();
+        List<Integer> forkVersions = versions.stream()
+                .filter(version -> version >= FORK_MIGRATION_BASE_VERSION)
+                .toList();
+
         List<String> gaps = new ArrayList<>();
-        for (int expected = 1; expected <= versions.size(); expected++) {
-            int actual = versions.get(expected - 1);
-            if (actual != expected) {
-                gaps.add("expected V" + expected + " but found V" + actual);
-            }
-        }
+        collectGaps(upstreamVersions, 1, gaps);
+        collectGaps(forkVersions, FORK_MIGRATION_BASE_VERSION, gaps);
 
         assertThat(gaps).isEmpty();
     }
@@ -117,6 +122,16 @@ class FlywayMigrationGuardrailTest {
 
     private Path repoRoot() {
         return Path.of("").toAbsolutePath().getParent().getParent();
+    }
+
+    private void collectGaps(List<Integer> versions, int baseVersion, List<String> gaps) {
+        for (int index = 0; index < versions.size(); index++) {
+            int expected = baseVersion + index;
+            int actual = versions.get(index);
+            if (actual != expected) {
+                gaps.add("expected V" + expected + " but found V" + actual);
+            }
+        }
     }
 
     private String relativeToRepo(Path file) {

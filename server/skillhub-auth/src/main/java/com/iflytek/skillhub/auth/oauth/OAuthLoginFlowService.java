@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OAuthLoginFlowService {
 
-    private final DefaultOAuth2UserService delegate = new DefaultOAuth2UserService();
+    private final DefaultOAuth2UserService delegate;
     private final Map<String, OAuthClaimsExtractor> extractors;
     private final AccessPolicy accessPolicy;
     private final IdentityBindingService identityBindingService;
@@ -37,6 +37,9 @@ public class OAuthLoginFlowService {
     public OAuthLoginFlowService(List<OAuthClaimsExtractor> extractorList,
                                  AccessPolicy accessPolicy,
                                  IdentityBindingService identityBindingService) {
+        this.delegate = new DefaultOAuth2UserService();
+        // The corporate IAM profile endpoint expects ?access_token= instead of a Bearer header
+        this.delegate.setRequestEntityConverter(new IamUserInfoRequestEntityConverter());
         this.extractors = extractorList.stream()
                 .collect(Collectors.toMap(OAuthClaimsExtractor::getProvider, Function.identity()));
         this.accessPolicy = accessPolicy;
