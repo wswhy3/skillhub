@@ -74,7 +74,7 @@ spring:
             client-secret: 79562fb2d4ed724cca68c107163dfef09834
             authorization-grant-type: authorization_code
             redirect-uri: https://skillhub-test.changhongit.com/login/oauth2/code/iam
-            client-name: skillhub
+            client-name: IAM
         provider:
           github:
             user-info-uri: https://api.github.com/user

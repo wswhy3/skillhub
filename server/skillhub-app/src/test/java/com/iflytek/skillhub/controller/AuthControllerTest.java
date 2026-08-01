@@ -181,6 +181,7 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.data[?(@.id=='local-password')].methodType").value(hasItems("PASSWORD")))
             .andExpect(jsonPath("$.data[?(@.id=='oauth-github')].actionUrl")
                 .value(hasItems("/oauth2/authorization/github?returnTo=%2Fdashboard%2Fpublish")))
+            .andExpect(jsonPath("$.data[?(@.id=='oauth-iam')].displayName").value(hasItems("IAM")))
             .andExpect(jsonPath("$.data[?(@.id=='oauth-iam')].actionUrl")
                 .value(hasItems("/oauth2/authorization/iam?returnTo=%2Fdashboard%2Fpublish")));
     }
