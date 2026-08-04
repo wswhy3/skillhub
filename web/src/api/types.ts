@@ -522,3 +522,147 @@ export interface NotificationPreferenceItem {
 export interface NotificationUnreadCount {
   count: number
 }
+
+// MCP Marketplace
+export interface McpCategory {
+  id: number
+  slug: string
+  displayName: string
+  description?: string
+  sortOrder?: number
+}
+
+export interface McpServerSummary {
+  id: number
+  namespace: string
+  slug: string
+  coordinate: string
+  displayName: string
+  summary: string
+  publisherName?: string
+  categories: McpCategory[]
+  iconUrl?: string
+  upstreamVersion?: string
+  updatedAt: string
+}
+
+export interface McpServerDetail {
+  id: number
+  namespace: string
+  slug: string
+  coordinate: string
+  displayName: string
+  summary: string
+  publisherName?: string
+  publisherUrl?: string
+  homepageUrl?: string
+  repositoryUrl?: string
+  documentationUrl?: string
+  licenseSpdx?: string
+  licenseName?: string
+  licenseUrl?: string
+  licenseNote?: string
+  categories: McpCategory[]
+  iconUrl?: string
+  readmeUrl?: string
+  upstreamVersion?: string
+  currentRevision?: number
+  sourceType?: string
+  sourceUrl?: string
+  sourceRevision?: string
+  sourceFetchedAt?: string
+  publishedAt?: string
+  updatedAt: string
+}
+
+export interface McpSearchParams {
+  keyword?: string
+  category?: string
+  namespace?: string
+  sort?: string
+  page?: number
+  size?: number
+}
+
+// MCP Admin
+export interface McpDraft {
+  versionId: number
+  serverId: number
+  namespace: string
+  slug: string
+  revisionNo: number
+  status: string
+  contentStatus: string
+  displayName: string
+  summary: string
+  sourceType?: string
+  sourceUrl?: string
+  contentErrorCode?: string
+  contentErrorMessage?: string
+  upstreamVersion?: string
+  publisherName?: string
+  publisherUrl?: string
+  homepageUrl?: string
+  repositoryUrl?: string
+  documentationUrl?: string
+  licenseSpdx?: string
+  licenseName?: string
+  licenseUrl?: string
+  licenseNote?: string
+  categoryIds?: number[]
+  lockVersion: number
+  createdAt: string
+}
+
+export interface McpSubmission {
+  id: number
+  versionId: number
+  serverId: number
+  namespace: string
+  slug: string
+  displayName: string
+  status: string
+  submittedBy: string
+  reviewedBy?: string
+  reviewComment?: string
+  lockVersion: number
+  submittedAt: string
+  reviewedAt?: string
+}
+
+export interface McpAdminServer {
+  id: number
+  namespace: string
+  slug: string
+  status: string
+  visibility: string
+  hidden: boolean
+  latestVersionId?: number
+  draftVersionId?: number
+  draftDisplayName?: string
+  updatedAt: string
+}
+
+export interface McpDraftPayload {
+  slug: string
+  displayName: string
+  summary: string
+  upstreamVersion?: string
+  publisherName?: string
+  publisherUrl?: string
+  homepageUrl?: string
+  repositoryUrl?: string
+  documentationUrl?: string
+  licenseSpdx?: string
+  licenseName?: string
+  licenseUrl?: string
+  licenseNote?: string
+  categoryIds?: number[]
+}
+
+export interface McpCategoryPayload {
+  slug?: string
+  sortOrder?: number
+  enabled?: boolean
+  translations?: Record<string, string>
+}

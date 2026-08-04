@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff } from 'lucide-react'
 import { getDirectAuthRuntimeConfig } from '@/api/client'
-import { LoginButton } from '@/features/auth/login-button'
+// import { LoginButton } from '@/features/auth/login-button' // IAM login disabled
 import { SessionBootstrapEntry } from '@/features/auth/session-bootstrap-entry'
 import { useAuthMethods } from '@/features/auth/use-auth-methods'
 import { usePasswordLogin } from '@/features/auth/use-password-login'
@@ -89,9 +89,11 @@ export function LoginPage() {
             />
 
             <Tabs defaultValue="password" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-1">
                 <TabsTrigger value="password">{t('login.tabPassword')}</TabsTrigger>
+                {/* OAuth tab hidden — IAM login disabled for now
                 <TabsTrigger value="oauth">{t('login.tabOAuth')}</TabsTrigger>
+                */}
               </TabsList>
 
               <TabsContent value="password">
@@ -179,12 +181,14 @@ export function LoginPage() {
                 </form>
               </TabsContent>
 
+              {/* OAuth tab content hidden — IAM login disabled for now
               <TabsContent value="oauth" className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {t('login.oauthHint')}
                 </p>
                 <LoginButton returnTo={returnTo} />
               </TabsContent>
+              */}
             </Tabs>
           </div>
         </div>

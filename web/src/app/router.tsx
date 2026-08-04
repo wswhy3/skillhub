@@ -71,6 +71,8 @@ function createRoleProtectedRouteComponent<TModule extends Record<string, unknow
 }
 
 const LandingPage = createLazyRouteComponent(() => import('@/pages/landing'), 'LandingPage')
+const McpMarketplacePage = createLazyRouteComponent(() => import('@/pages/mcp-marketplace'), 'McpMarketplacePage')
+const McpDetailPage = createLazyRouteComponent(() => import('@/pages/mcp-detail'), 'McpDetailPage')
 const HomePage = createLazyRouteComponent(() => import('@/pages/home'), 'HomePage')
 const LoginPage = createLazyRouteComponent(() => import('@/pages/login'), 'LoginPage')
 const RegisterPage = createLazyRouteComponent(() => import('@/pages/register'), 'RegisterPage')
@@ -144,6 +146,26 @@ const AdminLabelsPage = createRoleProtectedRouteComponent(
   () => import('@/pages/admin/labels'),
   'AdminLabelsPage',
   ['SUPER_ADMIN'],
+)
+const AdminMcpDraftsPage = createRoleProtectedRouteComponent(
+  () => import('@/pages/admin/mcp-drafts'),
+  'AdminMcpDraftsPage',
+  ['SKILL_ADMIN', 'SUPER_ADMIN'],
+)
+const AdminMcpReviewPage = createRoleProtectedRouteComponent(
+  () => import('@/pages/admin/mcp-review'),
+  'AdminMcpReviewPage',
+  ['SKILL_ADMIN', 'SUPER_ADMIN'],
+)
+const AdminMcpManagePage = createRoleProtectedRouteComponent(
+  () => import('@/pages/admin/mcp-manage'),
+  'AdminMcpManagePage',
+  ['SKILL_ADMIN', 'SUPER_ADMIN'],
+)
+const AdminMcpCategoriesPage = createRoleProtectedRouteComponent(
+  () => import('@/pages/admin/mcp-categories'),
+  'AdminMcpCategoriesPage',
+  ['SKILL_ADMIN', 'SUPER_ADMIN'],
 )
 
 function DefaultNotFound() {
@@ -219,6 +241,23 @@ const searchRoute = createRoute({
       requiresApiKey: search.requiresApiKey === true || search.requiresApiKey === 'true' ? true : undefined,
     }
   },
+})
+
+const mcpMarketplaceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'mcp',
+  component: McpMarketplacePage,
+  validateSearch: (search: Record<string, unknown>): { keyword: string; category?: string; sort: string } => ({
+    keyword: normalizeSearchQuery(typeof search.keyword === 'string' ? search.keyword : ''),
+    category: typeof search.category === 'string' && search.category ? search.category : undefined,
+    sort: (search.sort as string) || 'updated',
+  }),
+})
+
+const mcpDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/mcp/$slug',
+  component: McpDetailPage,
 })
 
 const termsRoute = createRoute({
@@ -444,6 +483,45 @@ const adminLabelsRoute = createRoute({
   component: AdminLabelsPage,
 })
 
+const adminMcpDraftsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'admin/mcp/drafts',
+  beforeLoad: requireAuth,
+  validateSearch: (search: Record<string, unknown>): { draftVersionId?: number } => {
+    const raw = search.draftVersionId
+    const parsed = typeof raw === 'number'
+      ? raw
+      : typeof raw === 'string' && raw
+        ? Number(raw)
+        : undefined
+    return {
+      draftVersionId: parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined,
+    }
+  },
+  component: AdminMcpDraftsPage,
+})
+
+const adminMcpReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'admin/mcp/review',
+  beforeLoad: requireAuth,
+  component: AdminMcpReviewPage,
+})
+
+const adminMcpManageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'admin/mcp/manage',
+  beforeLoad: requireAuth,
+  component: AdminMcpManagePage,
+})
+
+const adminMcpCategoriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: 'admin/mcp/categories',
+  beforeLoad: requireAuth,
+  component: AdminMcpCategoriesPage,
+})
+
 const routeTree = rootRoute.addChildren([
   landingRoute,
   skillsRoute,
@@ -452,6 +530,8 @@ const routeTree = rootRoute.addChildren([
   resetPasswordRoute,
   privacyRoute,
   searchRoute,
+  mcpMarketplaceRoute,
+  mcpDetailRoute,
   termsRoute,
   namespaceRoute,
   skillDetailRoute,
@@ -480,6 +560,10 @@ const routeTree = rootRoute.addChildren([
   adminUsersRoute,
   adminAuditLogRoute,
   adminLabelsRoute,
+  adminMcpDraftsRoute,
+  adminMcpReviewRoute,
+  adminMcpManageRoute,
+  adminMcpCategoriesRoute,
 ])
 
 export const router = createRouter({

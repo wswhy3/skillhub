@@ -107,6 +107,9 @@ spring:
 skillhub:
   builtin-skills:
     enabled: ${SKILLHUB_BUILTIN_SKILLS_ENABLED:true}
+  mcp:
+    review:
+      four-eyes-enabled: ${MCP_REVIEW_FOUR_EYES_ENABLED:false}
   redis:
     sentinel:
       check-sentinels-list: ${SKILLHUB_REDIS_SENTINEL_CHECK_SENTINELS_LIST:true}

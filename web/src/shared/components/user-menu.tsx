@@ -196,6 +196,22 @@ export function UserMenu({ user, triggerClassName }: UserMenuProps) {
                 {t('user.menu.labels')}
               </Link>
             ) : null}
+            {isSkillAdmin ? (
+              <>
+                <Link to="/admin/mcp/drafts" className={menuItemClassName} onClick={closeMenu}>
+                  {t('user.menu.mcpDrafts')}
+                </Link>
+                <Link to="/admin/mcp/review" className={menuItemClassName} onClick={closeMenu}>
+                  {t('user.menu.mcpReview')}
+                </Link>
+                <Link to="/admin/mcp/manage" className={menuItemClassName} onClick={closeMenu}>
+                  {t('user.menu.mcpManage')}
+                </Link>
+                <Link to="/admin/mcp/categories" className={menuItemClassName} onClick={closeMenu}>
+                  {t('user.menu.mcpCategories')}
+                </Link>
+              </>
+            ) : null}
             {isAuditor ? (
               <Link to="/admin/audit-log" className={menuItemClassName} onClick={closeMenu}>
                 {t('user.menu.auditLog')}
