@@ -44,6 +44,45 @@ class RouteSecurityPolicyRegistryTest {
     }
 
     @Test
+    void authorizationPolicies_shouldKeepPublicMcpEndpointsAnonymous() {
+        String[] publicRoutes = {
+                "/api/v1/mcp/categories",
+                "/api/v1/mcp/servers",
+                "/api/v1/mcp/servers/*/*",
+                "/api/v1/mcp/servers/*/*/readme",
+                "/api/v1/mcp/servers/*/*/icon"
+        };
+        for (String route : publicRoutes) {
+            boolean matched = registry.authorizationPolicies().stream()
+                    .anyMatch(policy -> policy.method() == HttpMethod.GET
+                            && route.equals(policy.pattern())
+                            && policy.accessLevel() == RouteSecurityPolicyRegistry.AccessLevel.PERMIT_ALL);
+            assertTrue(matched, "Expected permitAll GET policy for " + route);
+        }
+    }
+
+    @Test
+    void apiTokenPolicyAllowsPublicMcpReadAndRejectsMcpAdminWrite() {
+        assertTrue(registry.authorizeApiToken("GET", "/api/v1/mcp/categories", Set.of()).allowed());
+        assertTrue(registry.authorizeApiToken("GET", "/api/v1/mcp/servers", Set.of()).allowed());
+        assertTrue(registry.authorizeApiToken("GET", "/api/v1/mcp/servers/global/my-mcp", Set.of()).allowed());
+        assertTrue(registry.authorizeApiToken("GET", "/api/v1/mcp/servers/global/my-mcp/readme", Set.of()).allowed());
+        assertTrue(registry.authorizeApiToken("GET", "/api/v1/mcp/servers/global/my-mcp/icon", Set.of()).allowed());
+        // P0 不给 API Token 开放 MCP 管理写权限
+        assertFalse(registry.authorizeApiToken("POST", "/api/v1/admin/mcp/drafts", Set.of()).allowed());
+        assertFalse(registry.authorizeApiToken("PUT", "/api/v1/admin/mcp/drafts/1", Set.of()).allowed());
+    }
+
+    @Test
+    void authorizationPolicies_shouldRequireAuthenticationForMcpAdmin() {
+        boolean matched = registry.authorizationPolicies().stream()
+                .anyMatch(policy -> policy.method() == null
+                        && "/api/v1/admin/**".equals(policy.pattern())
+                        && policy.accessLevel() == RouteSecurityPolicyRegistry.AccessLevel.AUTHENTICATED);
+        assertTrue(matched);
+    }
+
+    @Test
     void authorizationPolicies_shouldKeepPublicLabelsEndpointsAnonymous() {
         boolean matchedV1 = registry.authorizationPolicies().stream()
                 .anyMatch(policy -> policy.method() == HttpMethod.GET

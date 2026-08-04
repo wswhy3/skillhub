@@ -106,6 +106,14 @@ public class GlobalExceptionHandler {
         throw ex;
     }
 
+    @ExceptionHandler(java.util.ConcurrentModificationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConcurrentModification(
+            java.util.ConcurrentModificationException ex, HttpServletRequest request) {
+        logHandledException(HttpStatus.CONFLICT, "error.conflict", request);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                apiResponseFactory.error(409, "error.conflict"));
+    }
+
     @ExceptionHandler(StorageAccessException.class)
     public ResponseEntity<ApiResponse<Void>> handleStorageAccess(StorageAccessException ex, HttpServletRequest request) {
         metrics.incrementStorageAccessFailure(ex.getOperation());

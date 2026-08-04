@@ -44,6 +44,15 @@ import type {
   LabelDefinition,
   LabelItem,
   BatchMemberResponse,
+  McpCategory,
+  McpServerSummary,
+  McpServerDetail,
+  McpSearchParams,
+  McpDraft,
+  McpSubmission,
+  McpAdminServer,
+  McpDraftPayload,
+  McpCategoryPayload,
 } from './types'
 import { ApiError } from '@/shared/lib/api-error'
 import i18n from '@/i18n/config'
@@ -854,6 +863,209 @@ export const tokenApi = {
     if (!response.ok || error) {
       throw new ApiError(envelope?.msg || `HTTP ${response.status}`, response.status, envelope?.msg, envelope?.msg)
     }
+  },
+}
+
+export const mcpApi = {
+  async listCategories(): Promise<McpCategory[]> {
+    return fetchJson<McpCategory[]>('/api/v1/mcp/categories')
+  },
+
+  async searchServers(params: McpSearchParams): Promise<PagedResponse<McpServerSummary>> {
+    const searchParams = new URLSearchParams()
+    if (params.keyword) searchParams.set('keyword', params.keyword)
+    if (params.category) searchParams.set('category', params.category)
+    if (params.namespace) searchParams.set('namespace', params.namespace)
+    if (params.sort) searchParams.set('sort', params.sort)
+    searchParams.set('page', String(params.page ?? 0))
+    searchParams.set('size', String(params.size ?? 24))
+    return fetchJson<PagedResponse<McpServerSummary>>(`/api/v1/mcp/servers?${searchParams.toString()}`)
+  },
+
+  async getDetail(namespace: string, slug: string): Promise<McpServerDetail> {
+    return fetchJson<McpServerDetail>(
+      `/api/v1/mcp/servers/${encodeURIComponent(namespace)}/${encodeURIComponent(slug)}`,
+    )
+  },
+
+  async getReadme(namespace: string, slug: string): Promise<string> {
+    const response = await fetch(
+      `/api/v1/mcp/servers/${encodeURIComponent(namespace)}/${encodeURIComponent(slug)}/readme`,
+      { headers: withRequestHeaders() },
+    )
+    if (!response.ok) {
+      throw new ApiError(`Failed to load README (${response.status})`, response.status)
+    }
+    return response.text()
+  },
+}
+
+export const adminMcpApi = {
+  async createDraft(payload: McpDraftPayload): Promise<McpDraft> {
+    return fetchJson<McpDraft>('/api/v1/admin/mcp/drafts', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async updateDraft(versionId: number, payload: McpDraftPayload): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/drafts/${versionId}`, {
+      method: 'PUT',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async getDraft(versionId: number): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/drafts/${versionId}`)
+  },
+
+  async getDraftReadme(versionId: number): Promise<string> {
+    return fetchText(`/api/v1/admin/mcp/drafts/${versionId}/readme`)
+  },
+
+  async createRevisionDraft(versionId: number): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/versions/${versionId}/draft`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async importDraft(versionId: number, sourceType: string, sourceUrl: string, sourceRevision?: string): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/drafts/${versionId}/import`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ sourceType, sourceUrl, sourceRevision }),
+    })
+  },
+
+  async saveManualReadme(versionId: number, readme: string): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/drafts/${versionId}/manual-readme`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ readme }),
+    })
+  },
+
+  async listSubmissions(params: { status?: string; page?: number; size?: number }): Promise<PagedResponse<McpSubmission>> {
+    const searchParams = new URLSearchParams()
+    if (params.status) searchParams.set('status', params.status)
+    searchParams.set('page', String(params.page ?? 0))
+    searchParams.set('size', String(params.size ?? 20))
+    return fetchJson<PagedResponse<McpSubmission>>(`/api/v1/admin/mcp/review/submissions?${searchParams.toString()}`)
+  },
+
+  async getSubmission(submissionId: number): Promise<McpSubmission> {
+    return fetchJson<McpSubmission>(`/api/v1/admin/mcp/review/submissions/${submissionId}`)
+  },
+
+  async submitDraft(versionId: number): Promise<McpSubmission> {
+    return fetchJson<McpSubmission>(`/api/v1/admin/mcp/drafts/${versionId}/submit`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async publishDraft(versionId: number): Promise<McpDraft> {
+    return fetchJson<McpDraft>(`/api/v1/admin/mcp/drafts/${versionId}/publish`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async withdrawSubmission(submissionId: number): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/submissions/${submissionId}/withdraw`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async approveSubmission(submissionId: number, lockVersion: number, comment?: string): Promise<McpSubmission> {
+    return fetchJson<McpSubmission>(`/api/v1/admin/mcp/submissions/${submissionId}/approve`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ lockVersion, comment }),
+    })
+  },
+
+  async rejectSubmission(submissionId: number, lockVersion: number, comment?: string): Promise<McpSubmission> {
+    return fetchJson<McpSubmission>(`/api/v1/admin/mcp/submissions/${submissionId}/reject`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ lockVersion, comment }),
+    })
+  },
+
+  async listServers(params: { page?: number; size?: number }): Promise<PagedResponse<McpAdminServer>> {
+    const searchParams = new URLSearchParams()
+    searchParams.set('page', String(params.page ?? 0))
+    searchParams.set('size', String(params.size ?? 20))
+    return fetchJson<PagedResponse<McpAdminServer>>(`/api/v1/admin/mcp/servers?${searchParams.toString()}`)
+  },
+
+  async yankVersion(versionId: number, reason?: string): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/versions/${versionId}/yank`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ reason }),
+    })
+  },
+
+  async hideServer(serverId: number, reason?: string): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/${serverId}/hide`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ reason }),
+    })
+  },
+
+  async unhideServer(serverId: number): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/${serverId}/unhide`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async archiveServer(serverId: number): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/${serverId}/archive`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async restoreServer(serverId: number): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/${serverId}/restore`, {
+      method: 'POST',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async deleteServer(serverId: number): Promise<void> {
+    await fetchJson<void>(`/api/v1/admin/mcp/${serverId}`, {
+      method: 'DELETE',
+      headers: await ensureCsrfHeaders(),
+    })
+  },
+
+  async listCategories(): Promise<McpCategory[]> {
+    return fetchJson<McpCategory[]>('/api/v1/admin/mcp/categories')
+  },
+
+  async createCategory(payload: McpCategoryPayload): Promise<McpCategory> {
+    return fetchJson<McpCategory>('/api/v1/admin/mcp/categories', {
+      method: 'POST',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async updateCategory(categoryId: number, payload: McpCategoryPayload): Promise<McpCategory> {
+    return fetchJson<McpCategory>(`/api/v1/admin/mcp/categories/${categoryId}`, {
+      method: 'PUT',
+      headers: await ensureCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(payload),
+    })
   },
 }
 
