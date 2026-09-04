@@ -1,0 +1,37 @@
+# Higress AI 网关 — 用于本地开发和测试 MCP Server 功能
+#
+# 使用方式：
+#   docker compose -f docker-compose.yml -f docker-compose.higress.yml up -d higress
+#
+# 启动后：
+#   - Higress 控制台: http://localhost:8001  （首次访问需设置管理员密码）
+#   - Higress 网关:   http://localhost:8080  （MCP Server 端点）
+#
+# 配置 MCP Server：
+#   1. 打开控制台 http://localhost:8001
+#   2. 添加服务来源 → 指向 skillhub-server:8080
+#   3. MCP 管理 → 创建 OpenAPI 类型的 MCP Server
+#   4. 将 deploy/higress/mcp-server-skillhub.yaml 内容粘贴到工具规范编辑器
+#
+# AI Agent 连接地址（所有支持 MCP 的工具通用）：
+#   http://localhost:8080/mcp-servers/skillhub/sse
+
+services:
+  higress:
+    image: higress-registry.cn-hangzhou.cr.aliyuncs.com/higress/all-in-one:latest
+    container_name: skillhub-higress
+    ports:
+      - "8080:8080"   # 网关 HTTP 端口（MCP Server 端点）
+      - "8443:8443"   # 网关 HTTPS 端口
+      - "8001:8001"   # 控制台端口
+    volumes:
+      - higress_data:/data
+    environment:
+      - DEFAULT_GATEWAY_HTTP_PORT=8080
+      - DEFAULT_GATEWAY_HTTPS_PORT=8443
+      - DEFAULT_CONSOLE_PORT=8001
+    networks:
+      - default
+
+volumes:
+  higress_data:

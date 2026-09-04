@@ -1,0 +1,107 @@
+# Higress MCP Server 配置 — SkillHub 技能搜索/详情/下载/命名空间
+#
+# 将 SkillHub 的 4 个核心 REST API 暴露为 MCP 工具，供 AI Agent 调用。
+# 部署方式：在 Higress 控制台 → MCP 管理 → 创建 OpenAPI 类型的 MCP Server，
+# 将本文件内容粘贴到工具规范编辑器中。
+#
+# 需要先在 Higress 中添加 SkillHub 后端作为服务来源（指向 server:8080）。
+# SkillHub API 返回格式: { code: 0, msg: "...", data: <实际数据>, timestamp, requestId }
+
+server:
+  name: "skillhub"
+
+tools:
+  # ========== 工具 1：搜索技能 ==========
+  - description: "Search skills by keyword. Returns a list of matching skills with their names, descriptions, namespaces, and download counts."
+    name: "search-skills"
+    requestTemplate:
+      method: "GET"
+      url: "http://skillhub-server:8080/api/web/skills?q={{.keyword}}&page={{.page}}&size={{.size}}"
+      headers:
+        - key: "X-Mock-User-Id"
+        value: "local-user"
+    responseTemplate:
+      body: |
+        {{- if .data.items }}
+        找到 {{.data.total}} 个技能（第 {{.data.page}} 页，每页 {{.data.size}}）：
+        {{- range $index, $skill := .data.items }}
+        {{- add $index 1 }}. **{{.slug}}** ({{.namespace}})
+           - 名称: {{.displayName}}
+           - 描述: {{.summary}}
+           - 下载量: {{.downloadCount}} | 星标: {{.starCount}} | 评分: {{.ratingAvg}}
+           - 最新版本: {{- if .publishedVersion}} v{{.publishedVersion.version}} ({{.publishedVersion.status}}){{- else}} 未发布{{- end}}
+        {{- end}}
+        {{- else }}
+        未找到匹配的技能。
+        {{- end }}
+
+  # ========== 工具 2：获取技能详情 ==========
+  - description: "Get detailed information about a specific skill, including description, lifecycle status, labels, and version info. Requires namespace and slug."
+    name: "get-skill-detail"
+    requestTemplate:
+      method: "GET"
+      url: "http://skillhub-server:8080/api/v1/skills/{{.namespace}}/{{.slug}}"
+      headers:
+        - key: "X-Mock-User-Id"
+        value: "local-user"
+    responseTemplate:
+      body: |
+        # {{.data.displayName}}
+        - 坐标: @{{.data.namespace}}/{{.data.slug}}
+        - 描述: {{.data.summary}}
+        - 状态: {{.data.status}} | 可见性: {{.data.visibility}}
+        - 下载量: {{.data.downloadCount}} | 星标: {{.data.starCount}} | 订阅: {{.data.subscriptionCount}}
+        - 评分: {{.data.ratingAvg}} ({{.data.ratingCount}} 人评价)
+        - 需要API Key: {{.data.requiresApiKey}}
+        {{- if .data.labels }}
+        - 标签:
+        {{- range .data.labels }}
+          - {{.name}}
+        {{- end}}
+        {{- end}}
+        {{- if .data.publishedVersion }}
+        - 已发布版本: v{{.data.publishedVersion.version}} (ID: {{.data.publishedVersion.id}}, 状态: {{.data.publishedVersion.status}})
+        {{- end}}
+        {{- if .data.headlineVersion }}
+        - 最新版本: v{{.data.headlineVersion.version}} (ID: {{.data.headlineVersion.id}}, 状态: {{.data.headlineVersion.status}})
+        {{- end}}
+
+  # ========== 工具 3：下载技能包 ==========
+  - description: "Download a skill package. Returns the skill package file (zip/tar.gz). Requires namespace and slug. Optionally specify a version."
+    name: "download-skill"
+    requestTemplate:
+      method: "GET"
+      url: "http://skillhub-server:8080/api/v1/skills/{{.namespace}}/{{.slug}}/download"
+      headers:
+        - key: "X-Mock-User-Id"
+        value: "local-user"
+    responseTemplate:
+      body: |
+        技能包已下载: @{{.namespace}}/{{.slug}}
+        请将下载的文件解压到本地技能目录中使用。
+
+  # ========== 工具 4：列出命名空间 ==========
+  - description: "List all visible namespaces. Returns namespace slugs, names, descriptions, and member counts. Useful for discovering what teams/groups are available."
+    name: "list-namespaces"
+    requestTemplate:
+      method: "GET"
+      url: "http://skillhub-server:8080/api/v1/namespaces?page=0&size=50"
+      headers:
+        - key: "X-Mock-User-Id"
+        value: "local-user"
+    responseTemplate:
+      body: |
+        {{- if .data.items }}
+        找到 {{.data.total}} 个命名空间：
+        {{- range $index, $ns := .data.items }}
+        {{- add $index 1 }}. **{{.slug}}** — {{.name}}
+           {{- if .description}}
+           - 描述: {{.description}}
+           {{- end}}
+           {{- if .memberCount}}
+           - 成员数: {{.memberCount}}
+           {{- end}}
+        {{- end}}
+        {{- else }}
+        未找到命名空间。
+        {{- end }}
