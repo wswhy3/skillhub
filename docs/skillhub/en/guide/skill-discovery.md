@@ -12,6 +12,7 @@ Search supports not only keyword matching but also multi-dimensional filtering a
 
 - **Full-text Search**: Search skill package names, descriptions, tags, authors
 - **Smart Filters**: Filter by namespace, tag, visibility
+- **My Namespaces Filter**: Signed-in users can filter search results by their own namespaces in one click (same list as the "My Namespaces" page)
 - **Multiple Sorting**: Sort by relevance, downloads, rating, update time
 - **Permission-aware**: Only show skill packages user has access to
 - **Real-time Updates**: Newly published skill packages appear immediately in search results
@@ -76,6 +77,8 @@ Enter keywords in the search box, e.g., "pdf parser".
 - Select namespace (e.g., only `iflytek` namespace)
 - Select tag (e.g., `data-processing`)
 - Select sort order (e.g., by downloads descending)
+
+**Filter by My Namespaces**: When signed in, a "Namespaces" row appears below the filter section, listing all namespaces from your "My Namespaces" page (e.g., `@global`, `@my-team`). Click a chip to show only skills in that namespace; click again to clear the filter. The selection syncs to the URL parameter (`namespace=...`) and survives refresh or link sharing. The row is hidden for anonymous users.
 
 ![Flow Diagram](/diagrams/skill-discovery-flow.png)
 
