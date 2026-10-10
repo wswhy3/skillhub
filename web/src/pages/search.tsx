@@ -10,6 +10,7 @@ import { SkeletonList } from '@/shared/components/skeleton-loader'
 import { EmptyState } from '@/shared/components/empty-state'
 import { Pagination } from '@/shared/components/pagination'
 import { useSearchSkills } from '@/shared/hooks/use-skill-queries'
+import { useMyNamespaces } from '@/shared/hooks/use-namespace-queries'
 import { useVisibleLabels } from '@/shared/hooks/use-label-queries'
 import { useMyStars } from '@/shared/hooks/use-user-queries'
 import { formatNamespaceSearchInput, normalizeSearchQuery, parseNamespaceSearchInput } from '@/shared/lib/search-query'
@@ -129,6 +130,7 @@ export function SearchPage() {
     requiresApiKey: requiresApiKeyOnly || undefined,
   })
   const { data: labels } = useVisibleLabels()
+  const { data: myNamespaces } = useMyNamespaces(isAuthenticated)
   const {
     data: starredSkills,
     isLoading: isLoadingStarred,
@@ -180,8 +182,12 @@ export function SearchPage() {
     navigate({ to: '/search', search: { q, namespace, label: nextLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
-  const handleNamespaceClear = () => {
-    navigate({ to: '/search', search: { q, namespace: '', label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
+  const handleNamespaceToggle = (slug: string) => {
+    const nextNamespace = namespace === slug ? '' : slug
+    // Keep queryInput in sync with the URL, otherwise the debounced search effect
+    // re-runs with a stale (empty) input and immediately navigates the namespace away.
+    setQueryInput(formatNamespaceSearchInput(nextNamespace, q))
+    navigate({ to: '/search', search: { q, namespace: nextNamespace, label: selectedLabel, sort, page: 0, starredOnly, requiresApiKey: requiresApiKeyOnly || undefined } })
   }
 
   const handleStarredToggle = () => {
@@ -304,16 +310,33 @@ export function SearchPage() {
               {label.displayName}
             </Button>
           ))}
-          {namespace ? (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleNamespaceClear}
-            >
-              {t('search.namespaceFilter', { namespace })}
-            </Button>
-          ) : null}
         </div>
+
+        {/* Namespace filter scoped to the namespaces the current user belongs to */}
+        {isAuthenticated && (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">{t('search.namespaceFilterLabel')}</span>
+            {(myNamespaces ?? []).map((ns) => (
+              <Button
+                key={ns.id}
+                variant={namespace === ns.slug ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleNamespaceToggle(ns.slug)}
+              >
+                @{ns.slug}
+              </Button>
+            ))}
+            {namespace && !(myNamespaces ?? []).some((ns) => ns.slug === namespace) ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleNamespaceToggle(namespace)}
+              >
+                @{namespace}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
 
       {/* Results */}

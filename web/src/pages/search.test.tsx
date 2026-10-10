@@ -83,6 +83,15 @@ vi.mock('@/shared/ui/button', () => ({
   },
 }))
 
+vi.mock('@/shared/hooks/use-namespace-queries', () => ({
+  useMyNamespaces: () => ({
+    data: [
+      { id: 1, slug: 'team-ai', displayName: 'Team AI', type: 'TEAM', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00Z' },
+      { id: 2, slug: 'platform', displayName: 'Platform', type: 'TEAM', status: 'ACTIVE', createdAt: '2026-01-01T00:00:00Z' },
+    ],
+  }),
+}))
+
 vi.mock('@/app/page-shell-style', () => ({
   APP_SHELL_PAGE_CLASS_NAME: 'page-shell',
 }))
@@ -254,6 +263,68 @@ describe('SearchPage', () => {
       },
       replace: true,
     })
+  })
+
+  it('lists the current user namespaces as filter buttons', () => {
+    const html = renderToStaticMarkup(<SearchPage />)
+
+    expect(html).toContain('search.namespaceFilterLabel')
+    expect(html).toContain('@team-ai')
+    expect(html).toContain('@platform')
+    expect(findButton('@team-ai').variant).toBe('default')
+    expect(findButton('@platform').variant).toBe('outline')
+  })
+
+  it('navigates with the selected namespace filter and resets paging', () => {
+    renderToStaticMarkup(<SearchPage />)
+
+    findButton('@platform').onClick?.()
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: '/search',
+      search: {
+        q: 'agent',
+        namespace: 'platform',
+        label: 'code-generation',
+        sort: 'downloads',
+        page: 0,
+        starredOnly: false,
+      },
+    })
+  })
+
+  it('clears the namespace filter when the active namespace button is toggled off', () => {
+    renderToStaticMarkup(<SearchPage />)
+
+    findButton('@team-ai').onClick?.()
+
+    expect(navigateMock).toHaveBeenCalledWith({
+      to: '/search',
+      search: {
+        q: 'agent',
+        namespace: '',
+        label: 'code-generation',
+        sort: 'downloads',
+        page: 0,
+        starredOnly: false,
+      },
+    })
+  })
+
+  it('falls back to the raw namespace value when it is not one of the user namespaces', () => {
+    useSearchMock.mockReturnValue({
+      q: '',
+      namespace: 'global',
+      label: '',
+      sort: 'newest',
+      page: 0,
+      starredOnly: false,
+    })
+
+    const html = renderToStaticMarkup(<SearchPage />)
+
+    expect(html).toContain('@global')
+    expect(findButton('@global').variant).toBe('default')
   })
 
   it('renders the default skill list when the empty query still returns items', () => {
