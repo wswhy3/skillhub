@@ -31,6 +31,8 @@ yarn-error.log*
 .dev/
 .memory/
 *.local.json
+docs/
+AGENTS.md
 
 # Local toolchain (project-scoped JDK/Node/pnpm, not committed)
 .tools/
