@@ -269,16 +269,16 @@ describe('SearchPage', () => {
     const html = renderToStaticMarkup(<SearchPage />)
 
     expect(html).toContain('search.namespaceFilterLabel')
-    expect(html).toContain('@team-ai')
-    expect(html).toContain('@platform')
-    expect(findButton('@team-ai').variant).toBe('default')
-    expect(findButton('@platform').variant).toBe('outline')
+    expect(html).toContain('Team AI')
+    expect(html).toContain('Platform')
+    expect(findButton('Team AI').variant).toBe('default')
+    expect(findButton('Platform').variant).toBe('outline')
   })
 
   it('navigates with the selected namespace filter and resets paging', () => {
     renderToStaticMarkup(<SearchPage />)
 
-    findButton('@platform').onClick?.()
+    findButton('Platform').onClick?.()
 
     expect(navigateMock).toHaveBeenCalledWith({
       to: '/search',
@@ -296,7 +296,7 @@ describe('SearchPage', () => {
   it('clears the namespace filter when the active namespace button is toggled off', () => {
     renderToStaticMarkup(<SearchPage />)
 
-    findButton('@team-ai').onClick?.()
+    findButton('Team AI').onClick?.()
 
     expect(navigateMock).toHaveBeenCalledWith({
       to: '/search',

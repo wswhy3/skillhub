@@ -323,7 +323,7 @@ export function SearchPage() {
                 size="sm"
                 onClick={() => handleNamespaceToggle(ns.slug)}
               >
-                @{ns.slug}
+                {ns.displayName || `@${ns.slug}`}
               </Button>
             ))}
             {namespace && !(myNamespaces ?? []).some((ns) => ns.slug === namespace) ? (
