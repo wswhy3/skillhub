@@ -82,6 +82,19 @@ public class NamespacePortalQueryAppService {
         return PageResponse.from(page);
     }
 
+    /**
+     * Lists every ACTIVE namespace for platform administrators. Unlike
+     * {@link #listNamespaces} this is not scoped to the caller's memberships,
+     * so admins can pick targets outside their own namespaces.
+     */
+    @Transactional(readOnly = true)
+    public List<NamespaceResponse> listAllActiveNamespaces() {
+        return namespaceRepository.findByStatus(NamespaceStatus.ACTIVE, Pageable.unpaged()).stream()
+                .sorted(Comparator.comparing(Namespace::getSlug))
+                .map(NamespaceResponse::from)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<MyNamespaceResponse> listMyNamespaces(Map<Long, NamespaceRole> userNamespaceRoles) {
         Map<Long, NamespaceRole> namespaceRoles = userNamespaceRoles != null ? userNamespaceRoles : Map.of();

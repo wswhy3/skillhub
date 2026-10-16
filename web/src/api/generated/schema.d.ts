@@ -379,7 +379,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getDraft"];
         put: operations["updateDraft"];
         post?: never;
         delete?: never;
@@ -1524,6 +1524,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/skills/{skillId}/move-namespace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["moveSkillToNamespace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/skills/{skillId}/hide": {
         parameters: {
             query?: never;
@@ -1716,6 +1732,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/mcp/versions/{versionId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createRevisionDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/mcp/submissions/{submissionId}/withdraw": {
         parameters: {
             query?: never;
@@ -1790,6 +1822,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/mcp/drafts/{versionId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publishDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/mcp/drafts/{versionId}/manual-readme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["saveManualReadme"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3396,6 +3460,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/namespaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listNamespaces_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/mcp/servers": {
         parameters: {
             query?: never;
@@ -3436,6 +3516,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getSubmission"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/mcp/drafts/{versionId}/readme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDraftReadme"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3663,6 +3759,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["deleteSkillById_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/mcp/{serverId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3912,6 +4024,17 @@ export interface components {
             sourceUrl?: string;
             contentErrorCode?: string;
             contentErrorMessage?: string;
+            upstreamVersion?: string;
+            publisherName?: string;
+            publisherUrl?: string;
+            homepageUrl?: string;
+            repositoryUrl?: string;
+            documentationUrl?: string;
+            licenseSpdx?: string;
+            licenseName?: string;
+            licenseUrl?: string;
+            licenseNote?: string;
+            categoryIds?: number[];
             /** Format: int32 */
             lockVersion?: number;
             /** Format: date-time */
@@ -4367,6 +4490,25 @@ export interface components {
             timestamp?: string;
             requestId?: string;
         };
+        AdminSkillMoveRequest: {
+            namespace?: string;
+        };
+        AdminSkillMoveResponse: {
+            /** Format: int64 */
+            skillId?: number;
+            namespace?: string;
+            slug?: string;
+            status?: string;
+        };
+        ApiResponseAdminSkillMoveResponse: {
+            /** Format: int32 */
+            code?: number;
+            msg?: string;
+            data?: components["schemas"]["AdminSkillMoveResponse"];
+            /** Format: date-time */
+            timestamp?: string;
+            requestId?: string;
+        };
         AdminSkillReportActionRequest: {
             comment?: string;
             disposition?: string;
@@ -4425,6 +4567,9 @@ export interface components {
             submittedAt?: string;
             /** Format: date-time */
             reviewedAt?: string;
+        };
+        McpManualReadmeRequest: {
+            readme?: string;
         };
         McpImportRequest: {
             sourceType?: string;
@@ -5519,6 +5664,15 @@ export interface components {
             /** Format: date-time */
             reviewedAt?: string;
         };
+        ApiResponseListNamespaceResponse: {
+            /** Format: int32 */
+            code?: number;
+            msg?: string;
+            data?: components["schemas"]["NamespaceResponse"][];
+            /** Format: date-time */
+            timestamp?: string;
+            requestId?: string;
+        };
         ApiResponsePageResponseMcpAdminServerResponse: {
             /** Format: int32 */
             code?: number;
@@ -5538,6 +5692,9 @@ export interface components {
             hidden?: boolean;
             /** Format: int64 */
             latestVersionId?: number;
+            /** Format: int64 */
+            draftVersionId?: number;
+            draftDisplayName?: string;
             /** Format: date-time */
             updatedAt?: string;
         };
@@ -6709,6 +6866,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseAdminUserMutationResponse"];
+                };
+            };
+        };
+    };
+    getDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                versionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMcpDraftResponse"];
                 };
             };
         };
@@ -8788,6 +8967,32 @@ export interface operations {
             };
         };
     };
+    moveSkillToNamespace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                skillId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminSkillMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseAdminSkillMoveResponse"];
+                };
+            };
+        };
+    };
     hideSkill: {
         parameters: {
             query?: never;
@@ -9078,6 +9283,28 @@ export interface operations {
             };
         };
     };
+    createRevisionDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                versionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMcpDraftResponse"];
+                };
+            };
+        };
+    };
     withdraw: {
         parameters: {
             query?: never;
@@ -9194,6 +9421,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseMcpSubmissionResponse"];
+                };
+            };
+        };
+    };
+    publishDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                versionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMcpDraftResponse"];
+                };
+            };
+        };
+    };
+    saveManualReadme: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                versionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["McpManualReadmeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseMcpDraftResponse"];
                 };
             };
         };
@@ -11728,6 +12003,26 @@ export interface operations {
             };
         };
     };
+    listNamespaces_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseListNamespaceResponse"];
+                };
+            };
+        };
+    };
     listServers: {
         parameters: {
             query?: {
@@ -11793,6 +12088,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseMcpSubmissionResponse"];
+                };
+            };
+        };
+    };
+    getDraftReadme: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                versionId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -12115,6 +12432,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseSkillDeleteResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serverId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseVoid"];
                 };
             };
         };

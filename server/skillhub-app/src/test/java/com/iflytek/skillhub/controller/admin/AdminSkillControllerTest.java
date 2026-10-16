@@ -88,6 +88,47 @@ class AdminSkillControllerTest {
     }
 
     @Test
+    void moveSkillToNamespace_returnsNewCoordinate() throws Exception {
+        Skill skill = new Skill(2L, "demo", "owner", SkillVisibility.PUBLIC);
+        given(skillGovernanceService.moveSkillFromGlobalToNamespace(
+                org.mockito.ArgumentMatchers.eq(10L),
+                org.mockito.ArgumentMatchers.eq("my-team"),
+                org.mockito.ArgumentMatchers.eq("admin"),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()))
+            .willReturn(skill);
+
+        PlatformPrincipal principal = new PlatformPrincipal("admin", "admin", "a@example.com", "", "github", Set.of("SKILL_ADMIN"));
+        var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_SKILL_ADMIN")));
+
+        mockMvc.perform(post("/api/v1/admin/skills/10/move-namespace")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"namespace\":\"@my-team\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(0))
+            .andExpect(jsonPath("$.data.skillId").value(10))
+            .andExpect(jsonPath("$.data.namespace").value("my-team"))
+            .andExpect(jsonPath("$.data.slug").value("demo"))
+            .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+    }
+
+    @Test
+    void moveSkillToNamespace_withUserAdminRole_returns403() throws Exception {
+        PlatformPrincipal principal = new PlatformPrincipal("admin", "admin", "a@example.com", "", "github", Set.of("USER_ADMIN"));
+        var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN")));
+
+        mockMvc.perform(post("/api/v1/admin/skills/10/move-namespace")
+                .with(authentication(auth))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"namespace\":\"my-team\"}"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
     void hideSkill_withUserAdminRole_returns403() throws Exception {
         PlatformPrincipal principal = new PlatformPrincipal("admin", "admin", "a@example.com", "", "github", Set.of("USER_ADMIN"));
         var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_USER_ADMIN")));

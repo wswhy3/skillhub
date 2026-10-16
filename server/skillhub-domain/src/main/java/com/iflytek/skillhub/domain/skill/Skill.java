@@ -197,6 +197,11 @@ public class Skill {
     }
 
     // Setters
+    // 仅供管理员跨命名空间移动 skill 使用；常规发布流程应通过构造函数指定 namespaceId。
+    public void setNamespaceId(Long namespaceId) {
+        this.namespaceId = namespaceId;
+    }
+
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }

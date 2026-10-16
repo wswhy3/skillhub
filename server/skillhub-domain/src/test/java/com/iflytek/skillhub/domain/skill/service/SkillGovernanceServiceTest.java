@@ -11,11 +11,17 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.BDDMockito.given;
 
 import com.iflytek.skillhub.domain.audit.AuditLogService;
+import com.iflytek.skillhub.domain.event.SkillNamespaceChangedEvent;
 import com.iflytek.skillhub.domain.event.SkillStatusChangedEvent;
+import com.iflytek.skillhub.domain.namespace.Namespace;
+import com.iflytek.skillhub.domain.namespace.NamespaceRepository;
 import com.iflytek.skillhub.domain.namespace.NamespaceRole;
+import com.iflytek.skillhub.domain.namespace.NamespaceStatus;
+import com.iflytek.skillhub.domain.namespace.NamespaceType;
 import com.iflytek.skillhub.domain.security.SecurityScanService;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
+import com.iflytek.skillhub.domain.shared.exception.DomainNotFoundException;
 import com.iflytek.skillhub.domain.skill.Skill;
 import com.iflytek.skillhub.domain.skill.SkillFile;
 import com.iflytek.skillhub.domain.skill.SkillFileRepository;
@@ -52,6 +58,8 @@ class SkillGovernanceServiceTest {
     @Mock
     private SkillFileRepository skillFileRepository;
     @Mock
+    private NamespaceRepository namespaceRepository;
+    @Mock
     private ObjectStorageService objectStorageService;
     @Mock
     private AuditLogService auditLogService;
@@ -70,6 +78,7 @@ class SkillGovernanceServiceTest {
                 skillRepository,
                 skillVersionRepository,
                 skillFileRepository,
+                namespaceRepository,
                 objectStorageService,
                 auditLogService,
                 eventPublisher,
@@ -127,6 +136,136 @@ class SkillGovernanceServiceTest {
         assertThat(result.getStatus()).isEqualTo(SkillStatus.ACTIVE);
         verify(auditLogService).record("owner", "UNARCHIVE_SKILL", "SKILL", 10L, null, "127.0.0.1", "JUnit", null);
         verify(eventPublisher).publishEvent(any(SkillStatusChangedEvent.class));
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_movesSkillAndRecordsAuditAndEvent() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        setField(skill, "id", 10L);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace target = namespace(2L, "my-team", NamespaceType.TEAM, NamespaceStatus.ACTIVE);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("my-team")).willReturn(Optional.of(target));
+        given(skillRepository.findByNamespaceIdAndSlugAndOwnerId(2L, "demo", "owner")).willReturn(Optional.empty());
+        given(skillRepository.save(skill)).willReturn(skill);
+
+        // 传入 @ 前缀形式，验证 slug 归一化。
+        Skill result = service.moveSkillFromGlobalToNamespace(10L, "@my-team", "admin", "127.0.0.1", "JUnit");
+
+        assertThat(result.getNamespaceId()).isEqualTo(2L);
+        assertThat(result.getUpdatedBy()).isEqualTo("admin");
+        verify(auditLogService).record("admin", "MOVE_SKILL", "SKILL", 10L, null, "127.0.0.1", "JUnit",
+                "{\"from\":\"global\",\"to\":\"my-team\"}");
+        verify(eventPublisher).publishEvent(new SkillNamespaceChangedEvent(10L, 1L, 2L, "admin"));
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_requiresSkillToExist() {
+        given(skillRepository.findById(10L)).willReturn(Optional.empty());
+
+        DomainNotFoundException ex = assertThrows(DomainNotFoundException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.skill.notFound");
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_rejectsNonGlobalSource() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        Namespace team = namespace(1L, "team-a", NamespaceType.TEAM, NamespaceStatus.ACTIVE);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(team));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.skill.move.sourceNotGlobal");
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_rejectsGlobalTarget() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace target = namespace(2L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("global")).willReturn(Optional.of(target));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "global", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.skill.move.targetGlobal");
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_rejectsFrozenTarget() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace frozen = namespace(2L, "my-team", NamespaceType.TEAM, NamespaceStatus.FROZEN);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("my-team")).willReturn(Optional.of(frozen));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.namespace.frozen");
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_rejectsArchivedTarget() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace archived = namespace(2L, "my-team", NamespaceType.TEAM, NamespaceStatus.ARCHIVED);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("my-team")).willReturn(Optional.of(archived));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.namespace.archived");
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_rejectsSlugConflictInTargetNamespace() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        setField(skill, "id", 10L);
+        Skill existing = new Skill(2L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace target = namespace(2L, "my-team", NamespaceType.TEAM, NamespaceStatus.ACTIVE);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("my-team")).willReturn(Optional.of(target));
+        given(skillRepository.findByNamespaceIdAndSlugAndOwnerId(2L, "demo", "owner")).willReturn(Optional.of(existing));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.skill.move.conflict");
+        verify(skillRepository, never()).save(any());
+        verify(auditLogService, never()).record(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void moveSkillFromGlobalToNamespace_mapsUniqueConstraintViolationToConflict() {
+        Skill skill = new Skill(1L, "demo", "owner", com.iflytek.skillhub.domain.skill.SkillVisibility.PUBLIC);
+        setField(skill, "id", 10L);
+        Namespace global = namespace(1L, "global", NamespaceType.GLOBAL, NamespaceStatus.ACTIVE);
+        Namespace target = namespace(2L, "my-team", NamespaceType.TEAM, NamespaceStatus.ACTIVE);
+        given(skillRepository.findById(10L)).willReturn(Optional.of(skill));
+        given(namespaceRepository.findById(1L)).willReturn(Optional.of(global));
+        given(namespaceRepository.findBySlug("my-team")).willReturn(Optional.of(target));
+        given(skillRepository.findByNamespaceIdAndSlugAndOwnerId(2L, "demo", "owner")).willReturn(Optional.empty());
+        given(skillRepository.save(skill)).willThrow(new org.springframework.dao.DataIntegrityViolationException("dup"));
+
+        DomainBadRequestException ex = assertThrows(DomainBadRequestException.class,
+                () -> service.moveSkillFromGlobalToNamespace(10L, "my-team", "admin", "127.0.0.1", "JUnit"));
+        assertThat(ex.messageCode()).isEqualTo("error.skill.move.conflict");
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    private Namespace namespace(long id, String slug, NamespaceType type, NamespaceStatus status) {
+        Namespace ns = new Namespace(slug, slug, "creator");
+        setField(ns, "id", id);
+        ns.setType(type);
+        ns.setStatus(status);
+        return ns;
     }
 
     @Test

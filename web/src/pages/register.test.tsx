@@ -16,10 +16,6 @@ vi.mock('react-i18next', async () => {
   }
 })
 
-vi.mock('@/features/auth/login-button', () => ({
-  LoginButton: () => null,
-}))
-
 vi.mock('@/features/auth/use-local-auth', () => ({
   useLocalRegister: () => ({
     mutateAsync: vi.fn(),
@@ -44,13 +40,6 @@ vi.mock('@/shared/ui/input', () => ({
   Input: () => null,
 }))
 
-vi.mock('@/shared/ui/tabs', () => ({
-  Tabs: ({ children }: { children: unknown }) => children,
-  TabsContent: ({ children }: { children: unknown }) => children,
-  TabsList: ({ children }: { children: unknown }) => children,
-  TabsTrigger: ({ children }: { children: unknown }) => children,
-}))
-
 import { renderToStaticMarkup } from 'react-dom/server'
 import { RegisterPage } from './register'
 
@@ -65,5 +54,12 @@ describe('RegisterPage', () => {
     expect(html).toContain('register.title')
     expect(html).toContain('register.subtitle')
     expect(html).toContain('register.submit')
+  })
+
+  it('does not render the OAuth sign-in entry', () => {
+    const html = renderToStaticMarkup(<RegisterPage />)
+
+    expect(html).not.toContain('register.tabOAuth')
+    expect(html).not.toContain('register.oauthHint')
   })
 })

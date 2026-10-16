@@ -1,8 +1,13 @@
 package com.iflytek.skillhub.domain.skill.service;
 
 import com.iflytek.skillhub.domain.audit.AuditLogService;
+import com.iflytek.skillhub.domain.event.SkillNamespaceChangedEvent;
 import com.iflytek.skillhub.domain.event.SkillStatusChangedEvent;
+import com.iflytek.skillhub.domain.namespace.Namespace;
+import com.iflytek.skillhub.domain.namespace.NamespaceRepository;
 import com.iflytek.skillhub.domain.namespace.NamespaceRole;
+import com.iflytek.skillhub.domain.namespace.NamespaceStatus;
+import com.iflytek.skillhub.domain.namespace.NamespaceType;
 import com.iflytek.skillhub.domain.security.SecurityScanService;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
@@ -24,6 +29,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -31,7 +37,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
  * Handles governance-oriented mutations on skills and versions, including
- * hiding, archiving, restoring, and destructive cleanup.
+ * hiding, archiving, restoring, destructive cleanup, and administrator-driven
+ * namespace moves.
  */
 @Service
 public class SkillGovernanceService {
@@ -41,6 +48,7 @@ public class SkillGovernanceService {
     private final SkillRepository skillRepository;
     private final SkillVersionRepository skillVersionRepository;
     private final SkillFileRepository skillFileRepository;
+    private final NamespaceRepository namespaceRepository;
     private final ObjectStorageService objectStorageService;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
@@ -51,6 +59,7 @@ public class SkillGovernanceService {
     public SkillGovernanceService(SkillRepository skillRepository,
                                   SkillVersionRepository skillVersionRepository,
                                   SkillFileRepository skillFileRepository,
+                                  NamespaceRepository namespaceRepository,
                                   ObjectStorageService objectStorageService,
                                   AuditLogService auditLogService,
                                   ApplicationEventPublisher eventPublisher,
@@ -60,6 +69,7 @@ public class SkillGovernanceService {
         this.skillRepository = skillRepository;
         this.skillVersionRepository = skillVersionRepository;
         this.skillFileRepository = skillFileRepository;
+        this.namespaceRepository = namespaceRepository;
         this.objectStorageService = objectStorageService;
         this.auditLogService = auditLogService;
         this.eventPublisher = eventPublisher;
@@ -130,6 +140,78 @@ public class SkillGovernanceService {
         Skill saved = skillRepository.save(skill);
         auditLogService.record(actorUserId, "UNHIDE_SKILL", "SKILL", skillId, null, clientIp, userAgent, null);
         return saved;
+    }
+
+    /**
+     * Moves a skill out of the global namespace into a team namespace.
+     * Only the skill row's namespace membership changes; versions, files, and
+     * object storage keys are namespace-independent. The skill coordinate
+     * (@namespace/slug) changes accordingly, so consumers must re-resolve it.
+     */
+    @Transactional
+    public Skill moveSkillFromGlobalToNamespace(Long skillId,
+                                                String targetNamespaceSlug,
+                                                String actorUserId,
+                                                String clientIp,
+                                                String userAgent) {
+        Skill skill = skillRepository.findById(skillId)
+                .orElseThrow(() -> new DomainNotFoundException("error.skill.notFound", skillId));
+
+        Namespace currentNamespace = namespaceRepository.findById(skill.getNamespaceId())
+                .orElseThrow(() -> new DomainNotFoundException("error.namespace.id.notFound", skill.getNamespaceId()));
+        if (currentNamespace.getType() != NamespaceType.GLOBAL) {
+            throw new DomainBadRequestException("error.skill.move.sourceNotGlobal", currentNamespace.getSlug());
+        }
+
+        String targetSlug = normalizeNamespaceSlug(targetNamespaceSlug);
+        Namespace targetNamespace = namespaceRepository.findBySlug(targetSlug)
+                .orElseThrow(() -> new DomainNotFoundException("error.namespace.slug.notFound", targetSlug));
+        if (targetNamespace.getType() == NamespaceType.GLOBAL) {
+            // 进入 global 应走 promotion 流程，而不是管理员直移。
+            throw new DomainBadRequestException("error.skill.move.targetGlobal", targetSlug);
+        }
+        if (targetNamespace.getStatus() == NamespaceStatus.FROZEN) {
+            throw new DomainBadRequestException("error.namespace.frozen", targetSlug);
+        }
+        if (targetNamespace.getStatus() == NamespaceStatus.ARCHIVED) {
+            throw new DomainBadRequestException("error.namespace.archived", targetSlug);
+        }
+
+        skillRepository.findByNamespaceIdAndSlugAndOwnerId(
+                        targetNamespace.getId(), skill.getSlug(), skill.getOwnerId())
+                .ifPresent(existing -> {
+                    throw new DomainBadRequestException("error.skill.move.conflict", skill.getSlug());
+                });
+
+        skill.setNamespaceId(targetNamespace.getId());
+        skill.setUpdatedBy(actorUserId);
+        Skill saved;
+        try {
+            saved = skillRepository.save(skill);
+        } catch (DataIntegrityViolationException ex) {
+            // 并发场景下 (namespace_id, slug, owner_id) 唯一约束兜底。
+            throw new DomainBadRequestException("error.skill.move.conflict", skill.getSlug());
+        }
+
+        auditLogService.record(
+                actorUserId,
+                "MOVE_SKILL",
+                "SKILL",
+                skillId,
+                null,
+                clientIp,
+                userAgent,
+                "{\"from\":\"" + currentNamespace.getSlug() + "\",\"to\":\"" + targetNamespace.getSlug() + "\"}");
+        eventPublisher.publishEvent(new SkillNamespaceChangedEvent(
+                skillId, currentNamespace.getId(), targetNamespace.getId(), actorUserId));
+        return saved;
+    }
+
+    private String normalizeNamespaceSlug(String namespaceSlug) {
+        if (namespaceSlug == null || namespaceSlug.isBlank()) {
+            throw new DomainBadRequestException("error.namespace.slug.notFound", namespaceSlug);
+        }
+        return namespaceSlug.startsWith("@") ? namespaceSlug.substring(1) : namespaceSlug;
     }
 
     @Transactional

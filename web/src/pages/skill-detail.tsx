@@ -18,6 +18,7 @@ import {
   shouldCollapseOverview,
 } from '@/features/skill/overview-collapse'
 import { resolveSkillActionErrorTitle } from '@/features/skill/skill-action-error'
+import { MoveNamespaceDialog } from '@/features/skill/move-namespace-dialog'
 import { isPrecheckConfirmationMessage, extractPrecheckWarnings } from '@/features/publish/publish-error-utils'
 import { clearDeletedSkillQueries, isDeleteSlugConfirmationValid, resolveDeletedSkillReturnTo } from '@/features/skill/skill-delete-flow'
 import { isSkillDetailQueriesEnabled } from './skill-detail-query'
@@ -275,6 +276,16 @@ export function SkillDetailPage() {
     mutationFn: () => adminApi.yankVersion(selectedVersionEntry!.id),
     onSuccess: refreshSkill,
   })
+
+  const handleSkillMoved = (targetNamespace: string) => {
+    // 移动后坐标变为 @target/slug：清理旧坐标缓存并跳转到新命名空间下的详情页。
+    refreshSkill()
+    navigate({
+      to: '/space/$namespace/$slug',
+      params: { namespace: targetNamespace, slug },
+    })
+  }
+
   const archiveMutation = useArchiveSkill()
   const unarchiveMutation = useUnarchiveSkill()
   const deleteSkillMutation = useDeleteSkill()
@@ -1343,6 +1354,11 @@ export function SkillDetailPage() {
                 <Button variant="destructive" onClick={() => yankMutation.mutate()} disabled={yankMutation.isPending}>
                   {yankMutation.isPending ? t('skillDetail.processing') : t('skillDetail.yankVersion')}
                 </Button>
+              )}
+              {(namespace === 'global' || namespace === '@global') && skill && (
+                <MoveNamespaceDialog skillId={skill.id} onMoved={handleSkillMoved}>
+                  <Button variant="outline">{t('skillDetail.moveNamespace')}</Button>
+                </MoveNamespaceDialog>
               )}
             </div>
           </Card>

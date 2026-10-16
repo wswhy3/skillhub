@@ -1482,6 +1482,24 @@ export const adminApi = {
     })
   },
 
+  // 管理员移动 Global 命名空间 skill 时可用的完整命名空间目录（含 type 字段，需过滤掉 GLOBAL）。
+  async getNamespaces(): Promise<Namespace[]> {
+    return fetchJson<Namespace[]>('/api/v1/admin/namespaces')
+  },
+
+  async moveSkill(skillId: number, namespace: string): Promise<{
+    skillId: number
+    namespace: string
+    slug: string
+    status: string
+  }> {
+    return fetchJson(`/api/v1/admin/skills/${skillId}/move-namespace`, {
+      method: 'POST',
+      headers: getCsrfHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ namespace }),
+    })
+  },
+
   async getProfileReviews(params: { status?: string; page?: number; size?: number; sortDirection?: 'ASC' | 'DESC' }) {
     const searchParams = new URLSearchParams()
     if (params.status) searchParams.set('status', params.status)

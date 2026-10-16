@@ -1,5 +1,6 @@
 package com.iflytek.skillhub.search.event;
 
+import com.iflytek.skillhub.domain.event.SkillNamespaceChangedEvent;
 import com.iflytek.skillhub.domain.event.SkillPublishedEvent;
 import com.iflytek.skillhub.domain.event.SkillStatusChangedEvent;
 import com.iflytek.skillhub.domain.skill.SkillStatus;
@@ -19,6 +20,17 @@ class SearchIndexEventListenerTest {
         SearchIndexEventListener listener = new SearchIndexEventListener(searchRebuildService, searchIndexService);
 
         listener.onSkillPublished(new SkillPublishedEvent(42L, 100L, "reviewer-1"));
+
+        verify(searchRebuildService).rebuildBySkill(42L);
+    }
+
+    @Test
+    void skillNamespaceChangedEventShouldTriggerSkillRebuild() {
+        SearchRebuildService searchRebuildService = mock(SearchRebuildService.class);
+        SearchIndexService searchIndexService = mock(SearchIndexService.class);
+        SearchIndexEventListener listener = new SearchIndexEventListener(searchRebuildService, searchIndexService);
+
+        listener.onSkillNamespaceChanged(new SkillNamespaceChangedEvent(42L, 1L, 2L, "admin"));
 
         verify(searchRebuildService).rebuildBySkill(42L);
     }

@@ -3,6 +3,8 @@ package com.iflytek.skillhub.controller.admin;
 import com.iflytek.skillhub.auth.rbac.PlatformPrincipal;
 import com.iflytek.skillhub.controller.BaseApiController;
 import com.iflytek.skillhub.dto.AdminSkillActionRequest;
+import com.iflytek.skillhub.dto.AdminSkillMoveRequest;
+import com.iflytek.skillhub.dto.AdminSkillMoveResponse;
 import com.iflytek.skillhub.dto.AdminSkillMutationResponse;
 import com.iflytek.skillhub.dto.ApiResponse;
 import com.iflytek.skillhub.dto.ApiResponseFactory;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Administrative skill-governance endpoints reserved for platform-level
- * moderation actions such as hide and unhide.
+ * moderation actions such as hide, unhide, and namespace moves.
  */
 @RestController
 @RequestMapping("/api/v1/admin/skills")
@@ -30,6 +32,27 @@ public class AdminSkillController extends BaseApiController {
                                 SkillGovernanceService skillGovernanceService) {
         super(responseFactory);
         this.skillGovernanceService = skillGovernanceService;
+    }
+
+    @PostMapping("/{skillId}/move-namespace")
+    @PreAuthorize("hasAnyRole('SKILL_ADMIN', 'SUPER_ADMIN')")
+    public ApiResponse<AdminSkillMoveResponse> moveSkillToNamespace(@PathVariable Long skillId,
+                                                                    @RequestBody AdminSkillMoveRequest request,
+                                                                    @AuthenticationPrincipal PlatformPrincipal principal,
+                                                                    HttpServletRequest httpRequest) {
+        String targetNamespace = request.namespace() != null && request.namespace().startsWith("@")
+                ? request.namespace().substring(1)
+                : request.namespace();
+        var skill = skillGovernanceService.moveSkillFromGlobalToNamespace(
+            skillId,
+            targetNamespace,
+            principal.userId(),
+            httpRequest.getRemoteAddr(),
+            httpRequest.getHeader("User-Agent")
+        );
+        // 移动后 skill 坐标变为 @target/slug，返回新坐标供前端跳转。
+        return ok("response.success.updated",
+                new AdminSkillMoveResponse(skillId, targetNamespace, skill.getSlug(), skill.getStatus().name()));
     }
 
     @PostMapping("/{skillId}/hide")
