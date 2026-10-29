@@ -46,7 +46,8 @@
       "subtitle": "使用社区驱动的技能构建强大的 AI 代理",
       "searchPlaceholder": "搜索技能...",
       "exploreSkills": "探索技能",
-      "publishSkill": "发布技能"
+      "publishSkill": "发布技能",
+      "scrollHint": "向下滚动"
     },
     "features": {
       "secure": {
@@ -74,11 +75,6 @@
         "description": "内置审核流程和权限管理，保障企业级技能质量。"
       }
     },
-    "stats": {
-      "skills": "项目库",
-      "downloads": "下载量",
-      "teams": "团队"
-    },
     "whySkillHub": {
       "title": "为什么选择 SkillHub",
       "subtitle": "专为企业打造的私有化 Agent 技能管理平台"
@@ -88,7 +84,7 @@
     "taglineHighlight": " Agent 技能包",
     "description": "自托管的私有技能注册平台，为团队提供安全、高效的技能共享与协作空间",
     "publishSkill": "发布技能",
-    "statsSkills": "技能包",
+    "statsSkills": "项目库",
     "statsDownloads": "下载量",
     "statsTeams": "团队",
     "whyTitle": "为什么选择",

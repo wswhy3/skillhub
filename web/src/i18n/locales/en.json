@@ -46,7 +46,8 @@
       "subtitle": "Build powerful AI agents with community-driven skills",
       "searchPlaceholder": "Search skills...",
       "exploreSkills": "Explore Skills",
-      "publishSkill": "Publish Skill"
+      "publishSkill": "Publish Skill",
+      "scrollHint": "Scroll down"
     },
     "features": {
       "secure": {
@@ -73,11 +74,6 @@
         "title": "Review Governance",
         "description": "Built-in review flows and permission controls to keep enterprise skill quality high."
       }
-    },
-    "stats": {
-      "skills": "Catalogs",
-      "downloads": "Downloads",
-      "teams": "Teams"
     },
     "whySkillHub": {
       "title": "Why SkillHub",

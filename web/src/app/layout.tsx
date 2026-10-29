@@ -61,7 +61,13 @@ export function Layout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-clip" style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
+    <div
+      className="min-h-screen flex flex-col relative overflow-x-clip"
+      // 首页透出固定变形文字背景层，其余页面保持原底色
+      // 【坑：曾试过首页挂 dark 类做深色科技感，用户观感反馈"没白色好看"已回退；
+      // 变量化改造（bg-[hsl(var(--card))] 等）保留，两态组件随时可再切换】
+      style={pathname === '/' ? undefined : { background: 'var(--bg-page, hsl(var(--background)))' }}
+    >
       {/* Decorative gradient orb */}
       <div
         className="absolute top-0 right-0 w-[600px] h-[500px] rounded-full opacity-90 pointer-events-none z-0"
@@ -133,7 +139,7 @@ export function Layout() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t rounded-t-2xl mt-auto" style={{ background: '#F1F5F9', borderColor: 'hsl(var(--border))' }}>
+      <footer className="relative z-10 border-t rounded-t-2xl mt-auto" style={{ background: 'hsl(var(--muted))', borderColor: 'hsl(var(--border))' }}>
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10 md:gap-12">
             <div className="flex-shrink-0">

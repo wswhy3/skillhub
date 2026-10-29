@@ -58,7 +58,7 @@ function CompactCopyButton({ text }: { text: string }) {
       onClick={handleCopy}
       aria-label={label}
       title={label}
-      className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl border bg-white transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+      className="absolute right-2.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl border bg-[hsl(var(--card))] transition-colors hover:bg-[hsl(var(--muted))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
       style={{ borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
     >
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -101,8 +101,22 @@ export function LandingQuickStartSection() {
   const currentTab = tabs.find((tab) => tab.id === activeTab) ?? tabs[0]
 
   return (
-    <section className="relative z-10 w-full px-6 py-14 md:py-16" style={{ background: 'var(--bg-page, hsl(var(--background)))' }}>
-      <div className="max-w-4xl mx-auto">
+    <section className="relative z-10 w-full px-6 pt-14 pb-32 md:pt-16 md:pb-44 overflow-visible">
+      {/* jizuo.png 圆盘底座：绝对定位在 section 底部，居中。
+          bottom 取负值让圆盘上半部分嵌入到 Tab 卡片下方、下半部分延伸到 section 之外，
+          实现"卡片坐在圆盘上"的视觉效果；宽度 max-w-7xl (1280px) 大气呈现，
+          opacity-50 弱化存在感避免喧宾夺主；
+          z-0 让圆盘垫在卡片（z-10）之下、整页背景（z-0）之上。
+          性能优化：loading=lazy 折叠下方懒加载，decoding=async 不阻塞主线程。 */}
+      <img
+        aria-hidden="true"
+        src="/landing/jizuo.png"
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute left-1/2 -translate-x-1/2 bottom-[-250px] w-full max-w-7xl z-0 pointer-events-none select-none opacity-50"
+      />
+      <div className="relative z-10 max-w-4xl mx-auto">
         <div className="text-center mb-7 md:mb-8">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3" style={{ color: 'hsl(var(--foreground))' }}>
             {t('landing.quickStart.title')}
@@ -113,12 +127,12 @@ export function LandingQuickStartSection() {
         </div>
 
         <div
-          className="mx-auto max-w-2xl rounded-[28px] border bg-white p-3 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.25)]"
+          className="mx-auto max-w-2xl rounded-[28px] border bg-[hsl(var(--card))] p-3 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.25)]"
           style={{ borderColor: 'hsl(var(--border-card))' }}
         >
           <div
             className="grid grid-cols-1 gap-2 rounded-2xl p-1.5 md:grid-cols-3"
-            style={{ background: 'linear-gradient(180deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.92) 100%)' }}
+            style={{ background: 'linear-gradient(180deg, hsl(var(--muted)/0.95) 0%, hsl(var(--muted)/0.75) 100%)' }}
           >
             {tabs.map((tab) => {
               const isActive = tab.id === currentTab.id
@@ -132,7 +146,7 @@ export function LandingQuickStartSection() {
                   aria-pressed={isActive}
                   className="flex min-h-11 items-center justify-center gap-2 rounded-[14px] px-4 py-3 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                   style={{
-                    background: isActive ? 'rgba(255,255,255,0.96)' : 'transparent',
+                    background: isActive ? 'hsl(var(--card))' : 'transparent',
                     color: isActive ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
                     boxShadow: isActive ? '0 6px 18px rgba(15, 23, 42, 0.08)' : 'none',
                   }}
@@ -153,7 +167,7 @@ export function LandingQuickStartSection() {
             </p>
 
             <div
-              className="relative rounded-2xl border bg-slate-50/90 px-4 py-3 pr-14 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+              className="relative rounded-2xl border bg-[hsl(var(--muted))] px-4 py-3 pr-14 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
               style={{ borderColor: 'hsl(var(--border))' }}
             >
               <div className="overflow-x-auto whitespace-nowrap">

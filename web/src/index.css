@@ -52,6 +52,8 @@
 
   .dark {
     /* Dark theme (preserved, not default) */
+    /* color-scheme 让浏览器原生滚动条/表单控件也用深色渲染 */
+    color-scheme: dark;
     --background: 222 47% 6%;
     --foreground: 210 40% 96%;
     --card: 222 40% 9%;
@@ -166,6 +168,50 @@
   to { opacity: 1; }
 }
 
+/* 首屏内容入场：上浮 + 模糊消散 + 微缩放落定（与 svg-morph-text 字母入场同风格）
+   时间编排与背景字母入场（0~1.35s）衔接：badge 0.3s → 标题 0.4s → 搜索框 0.5s → 按钮 0.6/0.7s */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-hero-rise {
+  /* backwards 而非 both：不锁定播完后的终态，避免覆盖 hover 的 opacity 过渡；
+     终态与元素静态样式一致（translateY(0)/scale(1)/blur(0)），回落无缝 */
+  animation: hero-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* 变形文字层呼吸：透明度 0.80↔0.92 缓慢脉动（svg-morph-text.tsx 引用）。
+   仅动 opacity → 浏览器提升为合成层动画，GPU 合成零重绘成本。
+   【坑：历史静态值 0.25 太隐蔽被弃用；辉光滤镜移除后基线从 0.68/0.82 上调至
+   0.80/0.92 补偿发光消失后的存在感——纯渐变填充靠不透明度撑清晰度】
+   【坑：不能把字母 opacity 也做进这个动画——字母 opacity 由 raf 按滚动进度驱动，
+   两处动画会互相覆盖。这里只动 svg 容器整体，字母个体状态仍归 raf 管】 */
+@keyframes morph-breath {
+  0%, 100% { opacity: 0.80; }
+  50% { opacity: 0.92; }
+}
+
+.morph-breath {
+  animation: morph-breath 5s ease-in-out infinite;
+}
+
+/* 低配/减少动态偏好：停掉装饰性呼吸（波浪浮动幅度极小由 raf 驱动，予以保留） */
+@media (prefers-reduced-motion: reduce) {
+  .morph-breath {
+    animation: none;
+    opacity: 0.88;
+  }
+}
+
 @keyframes slide-in-right {
   from {
     opacity: 0;
@@ -207,6 +253,118 @@
   transform: translateY(0);
 }
 
+/* 首页整页背景（bg.png，objectFit:fill 拉伸）：异步数据替换骨架屏、字体换档等会改变
+   页面总高度，背景随高度瞬间重拉伸产生"跳变"；给高度加过渡使其平滑落定。
+   初始高度在首帧前由 useLayoutEffect 写入，不会触发从 0 长高的入场动画 */
+.landing-bg-follow {
+  transition: height 0.45s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-bg-follow {
+    transition: none;
+  }
+}
+
+/* ─── 扇形抽卡（"为什么选择 SkillHub" 特性卡） ───
+   交互模式（游戏站角色展示）：牌堆（左侧微错位一摞）滚入视口后被钉住（pin），
+   继续下滑的滚动量直接驱动逐张向右舒展成弧形站位（GSAP ScrollTrigger scrub，
+   见 landing.tsx useEffect）；展开完毕留约 200px 保持段（容错），之后解除钉住。
+   双层结构：外层 .gacha-card 只承载 GSAP 的 transform/zIndex（scrub 每帧写内联样式），
+   内层 .gacha-card-inner 承载视觉与 hover 放大（CSS transition）——两套动画互不打架。
+   .fan-done 由 ScrollTrigger 挂上 → 触发落定扫光。 */
+.gacha-stage {
+  perspective: 1400px;
+}
+
+.gacha-card {
+  position: relative;
+}
+
+.gacha-card-inner {
+  position: relative;
+  overflow: hidden; /* 裁切 ::after 扫光，防止溢出到卡外 */
+  /* 悬停抬牌：回弹缓动（过冲一点再落回），GSAP 不触碰内层 → 可安全用 transition */
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
+}
+
+.gacha-card:hover {
+  /* GSAP 在外层写了内联 zIndex（1~6 扇形叠放），CSS 想在悬停时置顶只能 !important
+     （内联样式优先级高于普通声明）；作用域仅 hover 态，可控 */
+  z-index: 99 !important;
+}
+
+.gacha-card:hover .gacha-card-inner {
+  transform: scale(1.07);
+  box-shadow: 0 22px 44px rgba(106, 109, 255, 0.28);
+}
+
+/* 预告面板：进视口浮现（hint-in 类由自身 IntersectionObserver 挂，landing.tsx）；
+   退场归 GSAP timeline（展开开始时上浮旋出）。类切换驱动的 CSS 动画与 GSAP 内联不冲突：
+   入场是 animation（一次性播完即静止），GSAP 退场写 inline opacity/transform */
+.fan-hint {
+  opacity: 0;
+}
+
+.fan-hint.hint-in {
+  animation: fan-hint-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fan-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) rotate(-2deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* 闪卡扫光：斜向青紫白光带，扇形完成瞬间依次扫过（挂在内层：圆角/裁切都在内层） */
+.gacha-card-inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(106, 109, 255, 0.25) 46%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(34, 211, 238, 0.25) 54%,
+    transparent 65%
+  );
+  transform: translateX(-140%) skewX(-8deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gacha-stage.fan-done .gacha-card-inner::after {
+  animation: gacha-glint 0.9s ease-out;
+  animation-delay: var(--gacha-delay, 0ms);
+}
+
+@keyframes gacha-glint {
+  0% {
+    opacity: 1;
+    transform: translateX(-140%) skewX(-8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(140%) skewX(-8deg);
+  }
+}
+
+/* 减少动态偏好：不扫光、不悬停放大（卡片排列本身已由 GSAP matchMedia 降级为静态） */
+@media (prefers-reduced-motion: reduce) {
+  .gacha-stage.fan-done .gacha-card-inner::after {
+    animation: none;
+  }
+  .gacha-card:hover .gacha-card-inner {
+    transform: none;
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease both;
 }
@@ -237,6 +395,30 @@
 .delay-4 { animation-delay: 0.4s; }
 .delay-5 { animation-delay: 0.5s; }
 .delay-6 { animation-delay: 0.6s; }
+.delay-7 { animation-delay: 0.7s; }
+.delay-8 { animation-delay: 0.8s; }
+
+/* 探索技能按钮心跳（吸引点击）：双跳"扑通-扑通"节奏，2.4s 一轮循环。
+   心跳挂在 wrapper（.btn-heartbeat）上——按钮自身已用 hero-rise 入场动画，
+   同一元素的 animation 简写会互相覆盖，wrapper 独立元素互不打架。
+   1.6s 起跳：等按钮入场（0.6s 延迟 + 0.7s 时长）播完 */
+@keyframes btn-heartbeat {
+  0%, 100% { transform: scale(1); }
+  6% { transform: scale(1.04); }
+  12% { transform: scale(1); }
+  18% { transform: scale(1.07); }
+  24% { transform: scale(1); }
+}
+
+.btn-heartbeat {
+  animation: btn-heartbeat 2.4s ease-in-out 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-heartbeat {
+    animation: none;
+  }
+}
 
 /* ─── Gradient text ─── */
 .text-gradient-primary {
@@ -314,6 +496,99 @@
 
 .bg-brand-gradient {
   background: var(--brand-gradient);
+}
+
+/* ─── 首屏搜索框流光边框 ─── */
+/* 边框基底：渐变底 + mask 抠出 1.5px 边框环（透明区透出内层深色，环形光带均匀） */
+.hero-search-beam {
+  position: relative;
+  border-radius: 13px;
+  padding: 1.5px;
+}
+
+/* 渐变边环画在 ::before 上（mask-composite exclude 只留 1.5px 环）。
+   【坑：mask 绝不能挂在容器本体——mask 会连同所有后代一起裁剪，
+   白盒/放大镜/placeholder 全部隐形（输入框可点击但看不见内容），
+   用户"放大镜和 placeholder 不显示"的真正根因。环必须画在伪元素上】 */
+.hero-search-beam::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  padding: 1.5px;
+  background: linear-gradient(
+    120deg,
+    rgba(106, 109, 255, 0.55),
+    rgba(199, 126, 255, 0.4) 35%,
+    rgba(56, 224, 240, 0.5) 70%,
+    rgba(106, 109, 255, 0.55)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* 流光光带：沿圆角矩形边框路径拖行一整圈循环。
+   长椭圆（140×36），radial-gradient 椭圆比例（x 密度低 → 光带横向拉长），
+   亮核在前渐尾在后（渐变圆心偏移到 65% 造"拖尾"感）。
+   不设 offset-rotate → 光带沿路径切线自动旋转，转弯处自然跟边（曾用 0deg+圆点，只是小白点被弃用）。
+    【坑：椭圆半径(18px)远大于边环厚度(1.5px)——光带必须被裁进边环内，否则
+    下半盖进白盒内部、拖尾渗出容器外（"跑外面像 input 有底色"的根因）。
+    【坑：自裁 mask（挂光带自身）不可行——content-box xor 需要元素自身有 padding 造环，
+    光带无 padding → 异或为空 → 光带全不可见。裁剪必须参照容器几何 → 专职裁剪层
+    .hero-search-beam-clip（见下），mask 裁子孙在这里是特性而非缺陷】 */
+.hero-search-beam-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 36px;
+  margin: -18px 0 0 -70px;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70px 18px at 65% 50%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(56, 224, 240, 0.65) 28%,
+    rgba(199, 126, 255, 0.35) 55%,
+    rgba(199, 126, 255, 0) 75%
+  );
+  filter: blur(1.5px);
+  offset-path: inset(0.75px round 12.25px);
+  animation: hero-beam-orbit 4.5s linear infinite;
+}
+
+/* 光带专职裁剪层：与容器同尺寸的绝对覆盖层，用与边环相同的 exclude 环形 mask
+   （padding 1.5px 造环）把内部的光带裁到 1.5px 环内——光带"嵌在边框里"观感的来源。
+   offset-path 相对此层（= 容器几何不变）。mask 裁剪子孙在这里是刻意利用：
+   层内唯一子节点就是光带 span，白盒等内容不在此层内不受影响 */
+.hero-search-beam-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  padding: 1.5px;
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+@keyframes hero-beam-orbit {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-search-beam-dot {
+    animation: none;
+    opacity: 0.4;
+  }
 }
 
 /* ─── Handle tag (namespace @ pill) ─── */
@@ -477,6 +752,8 @@
 }
 
 /* ─── Hero input placeholder ─── */
+/* 深灰（--text-muted 46% 亮度）而非 --text-placeholder（63% 浅灰）：
+   浅灰白底上在部分屏幕/插件下接近不可见（用户反馈"没显出来"），加深保可见 */
 .hero-input::placeholder {
-  color: hsl(var(--text-placeholder));
+  color: hsl(var(--text-muted));
 }
