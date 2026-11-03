@@ -27,4 +27,8 @@ public interface SkillRepository {
     void decrementSubscriptionCount(Long skillId);
     List<Skill> findBySlug(String slug);
     List<Skill> findByNamespaceSlugAndSlug(String namespaceSlug, String slug);
+    /**
+     * 存量回填扫描：仅返回从未提取过正文标题（headline IS NULL）的技能。
+     */
+    List<Skill> findByHeadlineIsNull();
 }

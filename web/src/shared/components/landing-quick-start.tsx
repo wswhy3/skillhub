@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Bot, Check, Copy, Terminal, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useCopyToClipboard } from '@/shared/lib/clipboard'
+import { getAppBaseUrl } from '@/shared/lib/app-base-url'
 
 type LandingQuickStartTabId = 'agent' | 'human' | 'cli'
 
@@ -17,25 +18,6 @@ const tabIcons: Record<LandingQuickStartTabId, LucideIcon> = {
   agent: Bot,
   human: UserRound,
   cli: Terminal,
-}
-
-/**
- * Get the base URL for the application.
- * Prefers the runtime config if set and not localhost.
- * Falls back to the current page origin.
- */
-function getAppBaseUrl(): string {
-  if (typeof window === 'undefined') {
-    return ''
-  }
-  const runtimeConfig = window.__SKILLHUB_RUNTIME_CONFIG__
-  const configuredUrl = runtimeConfig?.appBaseUrl
-  // Use configured URL only if it's set and not localhost
-  if (configuredUrl && !configuredUrl.includes('localhost')) {
-    return configuredUrl
-  }
-  // Fallback to current page origin
-  return `${window.location.protocol}//${window.location.host}`
 }
 
 function CompactCopyButton({ text }: { text: string }) {

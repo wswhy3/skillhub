@@ -16,6 +16,7 @@ import com.iflytek.skillhub.domain.security.SecurityScanService;
 import com.iflytek.skillhub.domain.shared.exception.DomainBadRequestException;
 import com.iflytek.skillhub.domain.shared.exception.DomainForbiddenException;
 import com.iflytek.skillhub.domain.skill.*;
+import com.iflytek.skillhub.domain.skill.metadata.SkillBodyOverviewExtractor;
 import com.iflytek.skillhub.domain.skill.metadata.SkillMetadata;
 import com.iflytek.skillhub.domain.skill.metadata.SkillMetadataParser;
 import com.iflytek.skillhub.domain.skill.validation.ApiKeyRequirementDetector;
@@ -560,6 +561,7 @@ public class SkillPublishService {
         // 12. Update skill metadata and move the published pointer for auto-publish flows
         skill.setDisplayName(metadata.name());
         skill.setSummary(metadata.description());
+        applyBodyOverview(skill, metadata.body());
         skill.setRequiresApiKey(version.isRequiresApiKey());
         if (autoPublish || visibility == SkillVisibility.PRIVATE) {
             // Update latestVersionId for autoPublish or PRIVATE skill (UPLOADED status)
@@ -575,6 +577,16 @@ public class SkillPublishService {
 
         // 13. Return identifiers for the created version
         return new PublishResult(skill.getId(), skill.getSlug(), version);
+    }
+
+    /**
+     * 从 SKILL.md 正文提取展示标题/描述写入 skill。
+     * 提取不到时写空串（区别于 NULL：NULL 保留给存量数据的启动回填扫描）。
+     */
+    private void applyBodyOverview(Skill skill, String body) {
+        SkillBodyOverviewExtractor.Overview overview = SkillBodyOverviewExtractor.extract(body);
+        skill.setHeadline(overview.headline() != null ? overview.headline() : "");
+        skill.setHeadlineSummary(overview.summary() != null ? overview.summary() : "");
     }
 
     private void deleteReplaceableVersionArtifacts(Skill skill, SkillVersion version, String namespaceSlug) {

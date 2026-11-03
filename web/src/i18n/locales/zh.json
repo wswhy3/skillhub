@@ -84,9 +84,13 @@
     "taglineHighlight": " Agent 技能包",
     "description": "自托管的私有技能注册平台，为团队提供安全、高效的技能共享与协作空间",
     "publishSkill": "发布技能",
-    "statsSkills": "项目库",
-    "statsDownloads": "下载量",
-    "statsTeams": "团队",
+    "installPrompt": {
+      "title": "一键安装精准搜索技能，让你的 Agent 自己找到最佳 Skill！",
+      "description": "复制这条指令给你的 Agent，即可启用技能搜索与安装能力。",
+      "copy": "复制口令",
+      "copied": "已复制",
+      "agentsEyebrow": "适配主流 Agent 与客户端"
+    },
     "whyTitle": "为什么选择",
     "whyDescription": "专为企业打造的技能管理平台，提供完整的发布、发现、治理能力",
     "featuresList": {

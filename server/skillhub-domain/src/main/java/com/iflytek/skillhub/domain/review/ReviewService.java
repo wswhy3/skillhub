@@ -18,6 +18,7 @@ import com.iflytek.skillhub.domain.skill.SkillRepository;
 import com.iflytek.skillhub.domain.skill.SkillVersion;
 import com.iflytek.skillhub.domain.skill.SkillVersionRepository;
 import com.iflytek.skillhub.domain.skill.SkillVersionStatus;
+import com.iflytek.skillhub.domain.skill.metadata.SkillBodyOverviewExtractor;
 import com.iflytek.skillhub.domain.skill.metadata.SkillMetadata;
 import com.iflytek.skillhub.domain.skill.service.SkillGovernanceService;
 import jakarta.persistence.EntityManager;
@@ -353,6 +354,10 @@ public class ReviewService {
             SkillMetadata metadata = objectMapper.readValue(metadataJson, SkillMetadata.class);
             skill.setDisplayName(metadata.name());
             skill.setSummary(metadata.description());
+            // 审核通过后与发布链路保持一致：从正文提取展示标题/描述（提取不到写空串）
+            SkillBodyOverviewExtractor.Overview overview = SkillBodyOverviewExtractor.extract(metadata.body());
+            skill.setHeadline(overview.headline() != null ? overview.headline() : "");
+            skill.setHeadlineSummary(overview.summary() != null ? overview.summary() : "");
         } catch (Exception e) {
             throw new IllegalStateException("Failed to deserialize skill metadata", e);
         }

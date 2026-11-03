@@ -47,7 +47,7 @@ export function SkillCard({ skill, onClick, highlightStarred = true }: SkillCard
         <div className="flex items-start justify-between mb-3">
           <div className="space-y-2">
             <h3 className="font-semibold text-lg group-hover:text-primary transition-colors" style={{ color: 'hsl(var(--foreground))' }}>
-              {skill.displayName}
+              {skill.headline || skill.displayName}
             </h3>
           </div>
           <div className="flex items-center gap-2">
@@ -55,9 +55,9 @@ export function SkillCard({ skill, onClick, highlightStarred = true }: SkillCard
           </div>
         </div>
 
-        {skill.summary && (
+        {(skill.headlineSummary || skill.summary) && (
           <p className="text-sm text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-            {skill.summary}
+            {skill.headlineSummary || skill.summary}
           </p>
         )}
 

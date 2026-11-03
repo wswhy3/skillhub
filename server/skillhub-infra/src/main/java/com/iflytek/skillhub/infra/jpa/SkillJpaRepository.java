@@ -57,6 +57,8 @@ public interface SkillJpaRepository extends JpaRepository<Skill, Long>, SkillRep
 
     List<Skill> findBySlug(String slug);
 
+    List<Skill> findByHeadlineIsNull();
+
     @Query("SELECT s FROM Skill s JOIN Namespace n ON s.namespaceId = n.id WHERE n.slug = :namespaceSlug AND s.slug = :slug")
     List<Skill> findByNamespaceSlugAndSlug(@Param("namespaceSlug") String namespaceSlug, @Param("slug") String slug);
 }

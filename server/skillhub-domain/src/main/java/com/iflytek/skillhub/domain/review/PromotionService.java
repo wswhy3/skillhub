@@ -214,6 +214,8 @@ public class PromotionService {
                 sourceSkill.getOwnerId(), SkillVisibility.PUBLIC);
         newSkill.setDisplayName(sourceSkill.getDisplayName());
         newSkill.setSummary(sourceSkill.getSummary());
+        newSkill.setHeadline(sourceSkill.getHeadline());
+        newSkill.setHeadlineSummary(sourceSkill.getHeadlineSummary());
         newSkill.setSourceSkillId(sourceSkill.getId());
         newSkill.setCreatedBy(reviewerId);
         newSkill.setUpdatedBy(reviewerId);

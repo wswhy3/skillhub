@@ -70,7 +70,7 @@ class CliSkillAppServiceTest {
     void search_mapsResultsToCliFormat() {
         var searchResponse = new SkillSearchAppService.SearchResponse(
                 List.of(new SkillSummaryResponse(
-                        1L, "pdf-parser", "PDF Parser", "Parse PDFs",
+                        1L, "pdf-parser", "PDF Parser", null, "Parse PDFs", null,
                         "PUBLIC", "ACTIVE", false, 100L, 5, BigDecimal.valueOf(4.5), 10,
                         "global", Instant.now(), false,
                         new SkillLifecycleVersionResponse(1L, "1.2.0", "PUBLISHED"),
@@ -98,7 +98,7 @@ class CliSkillAppServiceTest {
         var searchResponse = new SkillSearchAppService.SearchResponse(
                 List.of(
                         new SkillSummaryResponse(
-                                2L, "ready", "Ready", "Installable",
+                                2L, "ready", "Ready", null, "Installable", null,
                                 "PUBLIC", "ACTIVE", false, 0L, 0, BigDecimal.ZERO, 0,
                                 "global", Instant.now(), false,
                                 new SkillLifecycleVersionResponse(2L, "1.0.0", "PUBLISHED"),

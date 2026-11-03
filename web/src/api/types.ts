@@ -159,7 +159,11 @@ export interface SkillSummary {
   id: number
   slug: string
   displayName: string
+  /** 从 SKILL.md 正文提取的展示标题（通常为中文），为空时回退 displayName */
+  headline?: string
   summary?: string
+  /** 从 SKILL.md 正文提取的展示描述（通常为中文），为空时回退 summary */
+  headlineSummary?: string
   visibility?: string
   status?: string
   requiresApiKey?: boolean
@@ -216,9 +220,13 @@ export interface SkillDetail {
   id: number
   slug: string
   displayName: string
+  /** 从 SKILL.md 正文提取的展示标题（通常为中文），为空时回退 displayName */
+  headline?: string
   ownerId?: string
   ownerDisplayName?: string
   summary?: string
+  /** 从 SKILL.md 正文提取的展示描述（通常为中文），为空时回退 summary */
+  headlineSummary?: string
   visibility: string
   status: string
   requiresApiKey?: boolean

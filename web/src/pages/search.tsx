@@ -68,7 +68,7 @@ function filterStarredSkills(skills: SkillSummary[], query: string, namespace: s
     if (!normalizedQuery) {
       return true
     }
-    return [skill.displayName, skill.summary, skill.namespace, skill.slug]
+    return [skill.headline, skill.displayName, skill.headlineSummary, skill.summary, skill.namespace, skill.slug]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedQuery))
   })

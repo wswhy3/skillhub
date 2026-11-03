@@ -22,6 +22,21 @@ public class Skill {
     @Column(name = "display_name", length = 200)
     private String displayName;
 
+    /**
+     * 从 SKILL.md 正文提取的展示标题（通常为首个 `#` 标题行，多为中文）。
+     * NULL 表示尚未处理（存量数据），空串表示已处理但正文无可提取标题；
+     * 展示层按“非空则优先，否则回退 display_name”使用。
+     */
+    @Column(name = "headline", length = 200)
+    private String headline;
+
+    /**
+     * 从 SKILL.md 正文提取的展示描述（标题后的首个内容行）。
+     * NULL/空串时展示层回退 frontmatter 的 summary。
+     */
+    @Column(name = "headline_summary", columnDefinition = "TEXT")
+    private String headlineSummary;
+
     @Column(columnDefinition = "TEXT")
     private String summary;
 
@@ -120,6 +135,14 @@ public class Skill {
         return displayName;
     }
 
+    public String getHeadline() {
+        return headline;
+    }
+
+    public String getHeadlineSummary() {
+        return headlineSummary;
+    }
+
     public String getSummary() {
         return summary;
     }
@@ -204,6 +227,14 @@ public class Skill {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public void setHeadline(String headline) {
+        this.headline = headline;
+    }
+
+    public void setHeadlineSummary(String headlineSummary) {
+        this.headlineSummary = headlineSummary;
     }
 
     public void setSummary(String summary) {

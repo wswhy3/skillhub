@@ -11,7 +11,7 @@ import { useSearchSkills } from '@/shared/hooks/use-skill-queries'
 import { useInView } from '@/shared/hooks/use-in-view'
 import { Button } from '@/shared/ui/button'
 import { HeroActions } from '@/features/landing-hero/hero-actions'
-import { HeroStats } from '@/features/landing-hero/hero-stats'
+import { HeroInstallPrompt } from '@/features/landing-hero/hero-install-prompt'
 import { MorphBg } from '@/features/landing-hero/svg-morph-text'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -70,84 +70,116 @@ export function LandingPage() {
     const cards = Array.from(stage.querySelectorAll<HTMLElement>('.gacha-card'))
     if (cards.length === 0) return
 
-    const mm = gsap.matchMedia()
-    mm.add('(min-width: 640px) and (prefers-reduced-motion: no-preference)', () => {
-      // 运行时测量：先清残留 transform（HMR 重挂载会有内联样式残留），再测 flex 原始位置。
-      // 用 offsetLeft（相对 stage 的布局位）而非 getBoundingClientRect——后者受 pin 的
-      // translate 影响，HMR 在 pin 区间中途重建时会测到视口位导致牌堆错位【坑】
-      cards.forEach((el) => gsap.set(el, { clearProps: 'transform' }))
+    // timeline 构建抽成函数：stage 宽度变化时需重建。
+    // 【坑】牌堆几何 stack.x = 20 + i*6 - offsetLeft 里的 offsetLeft 是 flex 居中溢出
+    // （6 卡总宽 1230 > stage 宽）下的自然布局位，随 stage 宽度变化。挂载瞬间测得的
+    // 几何被锁进 tween 后，若 stage 宽度再变（滚动条出现/消失、窗口 resize——个别
+    // 浏览器首次加载滚动条晚出现），收起时牌堆整体偏移，极端时卡片跑出屏幕左缘。
+    // 重建 = revert 清内联 transform → 重测 offsetLeft → 重建 timeline，全部同步
+    // 完成无中间帧闪烁；scrub 按当前滚动位置直接跳到对应进度，pin 中重建也正确。
+    let cleanupMm: (() => void) | null = null
+    const build = () => {
+      cleanupMm?.()
+      const mm = gsap.matchMedia()
+      mm.add('(min-width: 640px) and (prefers-reduced-motion: no-preference)', () => {
+        // 运行时测量：先清残留 transform（HMR 重挂载会有内联样式残留），再测 flex 原始位置。
+        // 用 offsetLeft（相对 stage 的布局位）而非 getBoundingClientRect——后者受 pin 的
+        // translate 影响，HMR 在 pin 区间中途重建时会测到视口位导致牌堆错位【坑】
+        cards.forEach((el) => gsap.set(el, { clearProps: 'transform' }))
 
-      // 两态几何：
-      // 牌堆 = 全部叠到舞台左缘（20px 内边距起），每张右错 6px 下错 5px 微错位
-      //   卡 i 落点(相对 stage) = offsetLeft_i + stack.x_i = 20 + i*6 → stack.x_i = 20 + i*6 - offsetLeft_i
-      // 扇形 = 弧线站位 + 倾角（负 margin 叠放）
-      const geom = cards.map((el, i) => {
-        const off = i - 2.5
-        return {
-          stack: { x: Math.round(20 + i * 6 - el.offsetLeft), y: 26 + i * 5, r: i * 2 - 4 },
-          fan: { x: Math.round(off * 6), y: Math.round(off * off * 22 - 40), r: Math.round(off * 9) },
+        // 两态几何：
+        // 牌堆 = 全部叠到舞台左缘（20px 内边距起），每张右错 6px 下错 5px 微错位
+        //   卡 i 落点(相对 stage) = offsetLeft_i + stack.x_i = 20 + i*6 → stack.x_i = 20 + i*6 - offsetLeft_i
+        // 扇形 = 弧线站位 + 倾角（负 margin 叠放）
+        const geom = cards.map((el, i) => {
+          const off = i - 2.5
+          return {
+            stack: { x: Math.round(20 + i * 6 - el.offsetLeft), y: 26 + i * 5, r: i * 2 - 4 },
+            fan: { x: Math.round(off * 6), y: Math.round(off * off * 22 - 40), r: Math.round(off * 9) },
+          }
+        })
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power1.inOut' },
+          scrollTrigger: {
+            trigger: section, // 钉整个 section：标题 + 舞台 + 预告面板一起钉住，展开全程标题可见
+            start: 'top 12%', // section 顶部滚到视口 12% 处开始钉住（标题完整在屏）
+            end: '+=900', // 之后 900px 滚动量全部用于展开
+            pin: true,
+            pinSpacing: true,
+            scrub: 0.5,
+            anticipatePin: 1,
+            // 扇面完成即挂 fan-done → 扫光（卡片在 0.78 落位，扫光在保持段内播）；
+            // 展开开始即摘 hint-in：CSS 动画 fill both 的填充态优先级高于 GSAP 内联样式，
+            // 不摘类退场 tween 会被动画盖住【坑】；摘类后 GSAP 内联立即接管（起始值已录为 1）
+            onUpdate: (self) => {
+              stage.classList.toggle('fan-done', self.progress > 0.8)
+              fanHintRef.current?.classList.toggle('hint-in', self.progress < 0.02)
+            },
+          },
+        })
+        // 预告面板：展开前 30% 滚动内退场（上浮+旋转+淡出），把右侧空间让给扇面。
+        // 必须用 fromTo 显式 from=1：scrub timeline 创建时会预渲染 progress 0，
+        // .to() 会把起始值录成当时的 computed（入场动画未播 → 0），之后永远 0→0【坑】
+        if (fanHintRef.current) {
+          tl.fromTo(
+            fanHintRef.current,
+            { opacity: 1, y: 0, rotation: 0 },
+            { opacity: 0, y: -40, rotation: 8, duration: 0.3, ease: 'power1.out' },
+            0,
+          )
+        }
+        geom.forEach((g, i) => {
+          // fromTo：from=牌堆态在创建时立即应用（immediateRender），每卡一个 tween 不共享属性，
+          // 不踩 morph-text 里"多个 fromTo 共享属性互相覆盖"的坑。
+          // zIndex 1→6 递增：扑克扇面左牌压右牌的叠放层次
+          cards[i].style.zIndex = String(i + 1)
+          // 依次推进：单张 0.45 + 错峰 0.3（重叠仅 33%），从第一张到第六张波浪式展开，
+          // 而不是之前 duration 0.7/错峰 0.15 的"一坨一起动"
+          tl.fromTo(
+            cards[i],
+            { x: g.stack.x, y: g.stack.y, rotation: g.stack.r, scale: 0.9 },
+            { x: g.fan.x, y: g.fan.y, rotation: g.fan.r, scale: 1, duration: 0.45 },
+            i * 0.3,
+          )
+        })
+        // 尾部保持段（容错）：第六张在 1.95s 落位，此空 tween 把总时长撑到 2.5s——
+        // 最后 0.55/2.5 ≈ 22% 滚动量（约 200px）内页面仍钉住、扇面静止纯欣赏，
+        // 之后才解除钉住继续下滑。空对象 tween 是 GSAP 标准的时长垫片
+        tl.to({}, { duration: 0.55 })
+        return () => {
+          tl.scrollTrigger?.kill()
+          tl.kill()
         }
       })
+      // 手机窄屏 / 减少动态：清掉内联 transform，预告面板直接显示不退场
+      mm.add('(max-width: 639px), (prefers-reduced-motion: reduce)', () => {
+        cards.forEach((el) => gsap.set(el, { clearProps: 'transform' }))
+        if (fanHintRef.current) gsap.set(fanHintRef.current, { clearProps: 'opacity,transform' })
+      })
+      cleanupMm = () => mm.revert()
+    }
 
-      const tl = gsap.timeline({
-        defaults: { ease: 'power1.inOut' },
-        scrollTrigger: {
-          trigger: section, // 钉整个 section：标题 + 舞台 + 预告面板一起钉住，展开全程标题可见
-          start: 'top 12%', // section 顶部滚到视口 12% 处开始钉住（标题完整在屏）
-          end: '+=900', // 之后 900px 滚动量全部用于展开
-          pin: true,
-          pinSpacing: true,
-          scrub: 0.5,
-          anticipatePin: 1,
-          // 扇面完成即挂 fan-done → 扫光（卡片在 0.78 落位，扫光在保持段内播）；
-          // 展开开始即摘 hint-in：CSS 动画 fill both 的填充态优先级高于 GSAP 内联样式，
-          // 不摘类退场 tween 会被动画盖住【坑】；摘类后 GSAP 内联立即接管（起始值已录为 1）
-          onUpdate: (self) => {
-            stage.classList.toggle('fan-done', self.progress > 0.8)
-            fanHintRef.current?.classList.toggle('hint-in', self.progress < 0.02)
-          },
-        },
+    build()
+
+    // stage 宽度变化即重建（RO 只比对宽度：pin 的 pinSpacing 会改文档高度，
+    // 高度变化绝不能触发重建，否则无限循环）
+    let lastW = stage.offsetWidth
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => {
+        const w = stage.offsetWidth
+        if (w !== lastW) {
+          lastW = w
+          build()
+        }
       })
-      // 预告面板：展开前 30% 滚动内退场（上浮+旋转+淡出），把右侧空间让给扇面。
-      // 必须用 fromTo 显式 from=1：scrub timeline 创建时会预渲染 progress 0，
-      // .to() 会把起始值录成当时的 computed（入场动画未播 → 0），之后永远 0→0【坑】
-      if (fanHintRef.current) {
-        tl.fromTo(
-          fanHintRef.current,
-          { opacity: 1, y: 0, rotation: 0 },
-          { opacity: 0, y: -40, rotation: 8, duration: 0.3, ease: 'power1.out' },
-          0,
-        )
-      }
-      geom.forEach((g, i) => {
-        // fromTo：from=牌堆态在创建时立即应用（immediateRender），每卡一个 tween 不共享属性，
-        // 不踩 morph-text 里"多个 fromTo 共享属性互相覆盖"的坑。
-        // zIndex 1→6 递增：扑克扇面左牌压右牌的叠放层次
-        cards[i].style.zIndex = String(i + 1)
-        // 依次推进：单张 0.45 + 错峰 0.3（重叠仅 33%），从第一张到第六张波浪式展开，
-        // 而不是之前 duration 0.7/错峰 0.15 的"一坨一起动"
-        tl.fromTo(
-          cards[i],
-          { x: g.stack.x, y: g.stack.y, rotation: g.stack.r, scale: 0.9 },
-          { x: g.fan.x, y: g.fan.y, rotation: g.fan.r, scale: 1, duration: 0.45 },
-          i * 0.3,
-        )
-      })
-      // 尾部保持段（容错）：第六张在 1.95s 落位，此空 tween 把总时长撑到 2.5s——
-      // 最后 0.55/2.5 ≈ 22% 滚动量（约 200px）内页面仍钉住、扇面静止纯欣赏，
-      // 之后才解除钉住继续下滑。空对象 tween 是 GSAP 标准的时长垫片
-      tl.to({}, { duration: 0.55 })
+      ro.observe(stage)
       return () => {
-        tl.scrollTrigger?.kill()
-        tl.kill()
+        ro.disconnect()
+        cleanupMm?.()
       }
-    })
-    // 手机窄屏 / 减少动态：清掉内联 transform，预告面板直接显示不退场
-    mm.add('(max-width: 639px), (prefers-reduced-motion: reduce)', () => {
-      cards.forEach((el) => gsap.set(el, { clearProps: 'transform' }))
-      if (fanHintRef.current) gsap.set(fanHintRef.current, { clearProps: 'opacity,transform' })
-    })
-    return () => mm.revert()
+    }
+    return () => cleanupMm?.()
     // fanHintRef 是稳定 ref，只作 GSAP 目标读取，不参与响应式依赖
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -255,8 +287,8 @@ export function LandingPage() {
             {t('landing.hero.title')}
           </h1>
           <HeroActions theme="light" />
-          {/* 统计行（原位恢复）：按钮下方，入场后数字从 0 滚动增长到目标值 */}
-          <HeroStats />
+          {/* 一键安装模块（原统计行位置）：复制 Agent 接入指令 + 适配 Agent 跑马灯 */}
+          <HeroInstallPrompt />
         </div>
       </section>
 

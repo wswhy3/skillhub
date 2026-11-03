@@ -84,9 +84,13 @@
     "taglineHighlight": " Agent Skills",
     "description": "Self-hosted private skill registry, providing secure and efficient skill sharing and collaboration for teams",
     "publishSkill": "Publish Skill",
-    "statsSkills": "Skills",
-    "statsDownloads": "Downloads",
-    "statsTeams": "Teams",
+    "installPrompt": {
+      "title": "One-click install of the precise search skill — let your Agent find the best Skill itself!",
+      "description": "Copy this command to your Agent to enable skill search and installation.",
+      "copy": "Copy command",
+      "copied": "Copied",
+      "agentsEyebrow": "Works with mainstream Agents & clients"
+    },
     "whyTitle": "Why Choose",
     "whyDescription": "Enterprise-grade skill management platform with complete publishing, discovery, and governance capabilities",
     "featuresList": {

@@ -265,6 +265,26 @@
   }
 }
 
+/* 首屏"一键安装"模块的 Agent 跑马灯（hero-install-prompt.tsx 引用）：
+   双份列表 w-max 横排，translateX(-50%) 循环即无缝；两端 mask 渐隐收边。
+   仅动 transform → 合成层动画零重绘 */
+@keyframes hero-agent-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.hero-agent-track {
+  animation: hero-agent-marquee 30s linear infinite;
+}
+.hero-agent-marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-agent-track {
+    animation: none;
+  }
+}
+
 /* ─── 扇形抽卡（"为什么选择 SkillHub" 特性卡） ───
    交互模式（游戏站角色展示）：牌堆（左侧微错位一摞）滚入视口后被钉住（pin），
    继续下滑的滚动量直接驱动逐张向右舒展成弧形站位（GSAP ScrollTrigger scrub，

@@ -25,6 +25,9 @@ vi.mock('lucide-react', () => ({
   Settings: () => null,
   ChevronDown: () => null,
   Sparkles: () => null,
+  Bot: () => null,
+  Check: () => null,
+  Copy: () => null,
 }))
 
 vi.mock('@/shared/components/landing-quick-start', () => ({
