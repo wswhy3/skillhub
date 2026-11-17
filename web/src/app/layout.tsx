@@ -46,9 +46,8 @@ export function Layout() {
     exact?: boolean
     auth?: boolean
   }> = [
-    { label: t('nav.landing'), to: '/', exact: true },
-    { label: t('nav.publish'), to: '/dashboard/publish', auth: true },
     { label: t('nav.search'), to: '/search' },
+    { label: t('nav.publish'), to: '/dashboard/publish', auth: true },
     { label: t('nav.mcp'), to: '/mcp' },
     { label: t('nav.dashboard'), to: '/dashboard', auth: true },
     { label: t('nav.mySkills'), to: '/dashboard/skills', auth: true },
@@ -79,8 +78,12 @@ export function Layout() {
 
       {/* Header */}
       <header className={getAppHeaderClassName(isHeaderElevated)} style={{ borderColor: 'hsl(var(--border))' }}>
-        <Link to="/" className="text-xl font-semibold tracking-tight text-brand-gradient">
-          SkillHub
+        <Link to="/" className="flex shrink-0 items-center" aria-label="SkillHub">
+          <img
+            src="/changhongit-logo.png"
+            alt="ChanghongIT"
+            className="h-9 w-auto object-contain"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8 text-[15px] font-normal" style={{ color: 'hsl(var(--text-secondary))' }}>

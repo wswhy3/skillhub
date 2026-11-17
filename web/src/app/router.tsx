@@ -70,7 +70,6 @@ function createRoleProtectedRouteComponent<TModule extends Record<string, unknow
   }
 }
 
-const LandingPage = createLazyRouteComponent(() => import('@/pages/landing'), 'LandingPage')
 const McpMarketplacePage = createLazyRouteComponent(() => import('@/pages/mcp-marketplace'), 'McpMarketplacePage')
 const McpDetailPage = createLazyRouteComponent(() => import('@/pages/mcp-detail'), 'McpDetailPage')
 const HomePage = createLazyRouteComponent(() => import('@/pages/home'), 'HomePage')
@@ -183,10 +182,17 @@ const rootRoute = createRootRoute({
 
 const requireAuth = createRequireAuth(getCurrentUser)
 
-const landingRoute = createRoute({
+const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: LandingPage,
+  // 首页已下线：根路径直接进入搜索页，避免出现空白页
+  beforeLoad: () => {
+    throw redirect({
+      to: '/search',
+      search: { q: '', sort: 'newest', page: 0, starredOnly: false },
+      replace: true,
+    })
+  },
 })
 
 const skillsRoute = createRoute({
@@ -523,7 +529,7 @@ const adminMcpCategoriesRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-  landingRoute,
+  indexRoute,
   skillsRoute,
   loginRoute,
   registerRoute,
